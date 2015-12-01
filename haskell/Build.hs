@@ -7,6 +7,7 @@ import System.FilePath.Find (find, fileType, FileType(RegularFile, Directory), (
 import Control.Applicative ((<$>))
 import System.Directory (canonicalizePath)
 import Data.Text (Text)
+import Control.Monad (void)
 
 lastN :: Int -> [a] -> [a]
 lastN n xs = drop (length xs - n) xs
@@ -86,7 +87,6 @@ rules sourceName destName allModuleFiles allCppSrcFiles = do
     let allModuleTargets = (destDir </>) <$> (dropDirectory 3 <$> allModuleFiles)
     let licenseFilename = "LICENSE_1.0.txt"
     let licenseTarget = destDir </> licenseFilename
-    let htmlDocsTarget = "docs"
     let pdfDocs = destDir </> destName <.> "pdf"
 
     let testHarnessExe = "test-harness"
@@ -108,7 +108,7 @@ rules sourceName destName allModuleFiles allCppSrcFiles = do
     let variants = ["Debug", "Release"]
     let exesDetail = [(singleIncludeDir, exampleExe), (multiIncludeDir, testHarnessExe)]
 
-    want ([htmlDocsTarget, pdfDocs, licenseTarget] ++ allModuleTargets ++ testMatrix compilers variants exesDetail)
+    want ([pdfDocs, licenseTarget] ++ allModuleTargets ++ testMatrix compilers variants exesDetail)
 
     licenseTarget %> \out -> copyFile' (".." </> licenseFilename) out
 
@@ -130,10 +130,12 @@ rules sourceName destName allModuleFiles allCppSrcFiles = do
         unit $ cmd (FileStdout out) exePath
 
     allModuleTargets &%> \_ -> do
+        let excludes = ["cpp/", licenseFilename, destName <.> "pdf"]
+        let excludeFlags = foldr (\a b -> "--exclude" : a : b) [] (('/' :) <$> excludes)
         putNormal "Running rsync"
         need allModuleFiles
 
-        unit $ cmd "rsync" "-az" "--delete" "--exclude" "/cpp/" ((moduleFilesDir </> sourceName) ++ "/") destDir
+        unit $ cmd "rsync" "-az" "--delete" excludeFlags ((moduleFilesDir </> sourceName) ++ "/") destDir
 
     allCppSrcTargets &%> \_ -> do
         need allCppSrcFiles
@@ -144,11 +146,15 @@ rules sourceName destName allModuleFiles allCppSrcFiles = do
         unit $ cmd "rsync" "-az" "--delete" srcCppTestDir destCppTestDir
 
     let docsSrc = "../modules" </> sourceName </> "docs"
-    pdfDocs %> \out -> do
-        unit $ cmd (Cwd docsSrc) "make" "latexpdf"
-        copyFile' (buildDir </> "docs/latex" </> destName <.> "pdf") pdfDocs
+    let pdfDocBuildFile = buildDir </> "docs/latex" </> destName <.> "pdf"
+    pdfDocBuildFile %> \out -> do
+        putNormal "Building PDF docs"
+        getDirectoryFiles "" [docsSrc ++ "//*"] >>= need
+        unit $ cmd (Cwd docsSrc) "make" "latexpdf" "html"
 
-    phony htmlDocsTarget $ unit $ cmd (Cwd docsSrc) "make" "html"
+    pdfDocs %> \out -> copyFile' pdfDocBuildFile pdfDocs
+
+    phony "docs" $ need [destDir </> destName <.> "pdf"]
 
       where
         destDir = buildDir </> destName
