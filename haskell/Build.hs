@@ -98,7 +98,7 @@ rules sourceName destName allModuleFiles allCppSrcFiles = do
 
     let compilers = ["gcc", "clang-3.6"]
     let variants = ["Debug", "Release"]
-    let exesDetail = [("single-include", "single-include"), ("multi-include", "test-harness")]
+    let exesDetail = [("single-include", "example"), ("multi-include", "test-harness")]
 
     want (licenseTarget : allModuleTargets ++ testMatrix compilers variants exesDetail)
 
@@ -125,6 +125,8 @@ rules sourceName destName allModuleFiles allCppSrcFiles = do
         unit $ cmd "rsync" "-az" "--delete" "--exclude" "/cpp/" ((moduleFilesDir </> sourceName) ++ "/") destDir
 
     allCppSrcTargets &%> \_ -> do
+        need allCppSrcFiles
+
         let srcCppTestDir = (".." </> cppTestDir </> sourceName) ++ "/"
 
         mkDir destCppTestDir

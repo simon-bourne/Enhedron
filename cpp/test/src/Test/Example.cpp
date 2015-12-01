@@ -1,23 +1,10 @@
-# MosquitoNet [![Linux / OS X Build Status](https://img.shields.io/travis/simon-bourne/Enhedron/master.svg?label=Linux%20/%20OS%20X%20build)](https://travis-ci.org/simon-bourne/Enhedron) [![Windows Build Status](https://img.shields.io/appveyor/ci/simon-bourne/enhedron/master.svg?label=Windows%20build)](https://ci.appveyor.com/project/simon-bourne/enhedron)
+//
+//          Copyright Simon Bourne 2015.
+// Distributed under the Boost Software License, Version 1.0.
+//    (See accompanying file LICENSE_1_0.txt or copy at
+//          http://www.boost.org/LICENSE_1_0.txt)
+//
 
-Keep the bugs out on Linux, OS X and Windows.
-
-## Features
-
-  * Single header version makes it simple to get started.
-  * Only one macro, which only adds file and line arguments to a simple function call. This means you're always dealing
-    with C++ code, so you could generate tests programatically.
-  * Simple tests or BDD style tests.
-  * Parameterized tests.
-  * Model checking. Specify a model and the values each argument can have and MosquitoNet will check every combination
-    of arguments against your model.
-  * Customizable assertions using natural C++ expressions.
-  * Tests can continue to run after the first failure.
-  * Nested test contexts.
-
-## Example
-
-```C++
 #include "MosquitoNet.h"
 
 #include <vector>
@@ -99,6 +86,3 @@ static Suite u("Util",
         )
     )
 );
-
-```
-  
