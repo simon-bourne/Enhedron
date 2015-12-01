@@ -87,6 +87,7 @@ rules sourceName destName allModuleFiles allCppSrcFiles = do
     let allModuleTargets = (destDir </>) <$> (dropDirectory 3 <$> allModuleFiles)
     let licenseFilename = "LICENSE_1.0.txt"
     let licenseTarget = destDir </> licenseFilename
+    let docsTarget = "docs"
 
     phony "clean" $ do
         putNormal "Cleaning files in build"
@@ -100,7 +101,7 @@ rules sourceName destName allModuleFiles allCppSrcFiles = do
     let variants = ["Debug", "Release"]
     let exesDetail = [("single-include", "example"), ("multi-include", "test-harness")]
 
-    want (licenseTarget : allModuleTargets ++ testMatrix compilers variants exesDetail)
+    want ([docsTarget, licenseTarget] ++ allModuleTargets ++ testMatrix compilers variants exesDetail)
 
     licenseTarget %> \out -> copyFile' (".." </> licenseFilename) out
 
@@ -131,6 +132,8 @@ rules sourceName destName allModuleFiles allCppSrcFiles = do
 
         mkDir destCppTestDir
         unit $ cmd "rsync" "-az" "--delete" srcCppTestDir destCppTestDir
+
+    phony docsTarget $ unit $ cmd (Cwd "../modules/Test/docs") "make" "html"
 
       where
         destDir = buildDir </> destName

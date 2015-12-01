@@ -10,12 +10,15 @@ containers:
     setup:
     - !UbuntuRelease { version: 15.10 }
     - !UbuntuUniverse
-    - !Install [ make, cmake, clang, gcc, g++, libboost-all-dev, ca-certificates, gdbserver, haskell-platform, rsync ]
+    - !Install [ ca-certificates, make, cmake, clang, gcc, g++, libboost-all-dev, gdbserver,
+                 haskell-platform, rsync, python-pip ]
     - !Env
       HOME: /root # For cabal
     - !Sh |
         cabal update
         cabal install filemanip megaparsec shake text
+        pip install sphinx sphinx-autobuild
+
     volumes:
       /tmp: !Tmpfs {size: 1Gi}
 
@@ -26,25 +29,10 @@ commands:
     container: copyright-header
     work-dir: .
     run: copyright-header/add-header "$@"
-  test: !Command
+  shake: !Command
     description: Build and test everything
     accepts-arguments: true
     container: build
     work-dir: haskell
     environ: { HOME: /root }
     run: ./Build.hs "$@"
-  quick: !Command
-    description: Build gcc Debug and run tests
-    accepts-arguments: false
-    container: build
-    work-dir: haskell
-    environ: { HOME: /root }
-    run: ./Build.hs quick
-  clean: !Command
-    description: Clean build and test results
-    accepts-arguments: false
-    container: build
-    work-dir: haskell
-    environ: { HOME: /root }
-    run: ./Build.hs clean
-
