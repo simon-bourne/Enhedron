@@ -12,11 +12,19 @@ import Control.Monad (void)
 lastN :: Int -> [a] -> [a]
 lastN n xs = drop (length xs - n) xs
 
-buildDir, moduleFilesDir, enhedron, cppTestDir :: FilePath
+buildDir, moduleFilesDir, enhedron, cppTestDir, testHarnessExe, integrationTestExe, exampleExe :: FilePath
 buildDir = "../build"
 moduleFilesDir = "../modules"
 enhedron = "Enhedron"
 cppTestDir = "cpp/test/src"
+testHarnessExe = "test-harness"
+integrationTestExe = "integration-test"
+exampleExe = "example"
+
+multiIncludeDir, singleIncludeDir :: FilePath
+multiIncludeDir = "multi-include"
+singleIncludeDir = "single-include"
+
 
 dropDirectory :: Int -> FilePath -> FilePath
 dropDirectory c
@@ -58,8 +66,8 @@ allFilesIn = find (fileType ==? Directory) (fileType ==? RegularFile)
 singleHeaderName :: FilePath -> FilePath
 singleHeaderName destName = buildDir </> destName  </> "cpp/single-include" </> destName <.> "h"
 
-singleHeaderRules :: FilePath -> [FilePath] -> Text -> Rules ()
-singleHeaderRules destName singleHeaderDeps singleHeaderContents = do
+singleHeaderRules :: FilePath -> FilePath -> [FilePath] -> Text -> Rules ()
+singleHeaderRules destDir destName singleHeaderDeps singleHeaderContents = do
     let singleHeader = singleHeaderName destName
     let targetHeaders = singleHeader : ((destDir </>) <$> (dropDirectory 1 <$> singleHeaderDeps))
 
@@ -68,8 +76,6 @@ singleHeaderRules destName singleHeaderDeps singleHeaderContents = do
     targetHeaders &%> \_ -> do
         mapM_ (copyHeader destDir) singleHeaderDeps
         liftIO $ writeHeader singleHeader singleHeaderContents
-      where
-        destDir = buildDir </> destName
 
 testLogTarget :: FilePath -> FilePath -> FilePath -> FilePath -> FilePath
 testLogTarget compiler variant includeType name =
@@ -79,22 +85,15 @@ testMatrix :: [FilePath] -> [FilePath] -> [(FilePath, FilePath)] -> [FilePath]
 testMatrix compilers variants exeDetails =
     [testLogTarget c v t n | c <- compilers, v <- variants, (t, n) <- exeDetails ]
 
-rules :: FilePath -> FilePath -> [FilePath] -> [FilePath] -> Rules ()
-rules sourceName destName allModuleFiles allCppSrcFiles = do
+rules :: FilePath -> FilePath -> FilePath -> [FilePath] -> Rules ()
+rules destDir sourceName destName allModuleFiles = do
     let singleHeader = singleHeaderName destName
-    let destCppTestDir = destDir </> cppTestDir
-    let allCppSrcTargets = (destCppTestDir </>) <$> (dropDirectory 5 <$> allCppSrcFiles)
     let allModuleTargets = (destDir </>) <$> (dropDirectory 3 <$> allModuleFiles)
     let licenseFilename = "LICENSE_1.0.txt"
     let licenseTarget = destDir </> licenseFilename
     let pdfDocs = destDir </> destName <.> "pdf"
 
-    let testHarnessExe = "test-harness"
-    let integrationTestExe = "integration-test"
-    let exampleExe = "example"
-
-    let multiIncludeDir = "multi-include"
-    let singleIncludeDir = "single-include"
+    phony "docs" $ need [destDir </> destName <.> "pdf"]
 
     phony "clean" $ do
         putNormal "Cleaning files in build"
@@ -112,16 +111,6 @@ rules sourceName destName allModuleFiles allCppSrcFiles = do
 
     licenseTarget %> \out -> copyFile' (".." </> licenseFilename) out
 
-    buildDir </> "exe/*/*" </> singleIncludeDir </> exampleExe %> \out ->
-        cmake (singleHeader : allCppSrcTargets) destDir $ takeDirectory out
-
-    let multiIncludeTargetDir = buildDir </> "exe/*/*" </> multiIncludeDir
-    let multiIncludeTargets = (multiIncludeTargetDir </> ) <$> [testHarnessExe, integrationTestExe]
-
-    multiIncludeTargets &%> \outs -> case outs of
-        out : _ -> cmake allCppSrcFiles ".." $ takeDirectory out
-        _ -> return ()
-
     buildDir </> "test/*/*/*/*" <.> "log" %> \out -> do
         let tailPath = lastN 4 $ splitPath out
         let exePath = dropExtension (buildDir </> (foldl (</>) "exe" tailPath))
@@ -137,14 +126,6 @@ rules sourceName destName allModuleFiles allCppSrcFiles = do
 
         unit $ cmd "rsync" "-az" "--delete" excludeFlags ((moduleFilesDir </> sourceName) ++ "/") destDir
 
-    allCppSrcTargets &%> \_ -> do
-        need allCppSrcFiles
-
-        let srcCppTestDir = (".." </> cppTestDir </> sourceName) ++ "/"
-
-        mkDir destCppTestDir
-        unit $ cmd "rsync" "-az" "--delete" srcCppTestDir destCppTestDir
-
     let docsSrc = "../modules" </> sourceName </> "docs"
     let pdfDocBuildFile = buildDir </> "docs/latex" </> destName <.> "pdf"
     pdfDocBuildFile %> \out -> do
@@ -154,10 +135,29 @@ rules sourceName destName allModuleFiles allCppSrcFiles = do
 
     pdfDocs %> \out -> copyFile' pdfDocBuildFile pdfDocs
 
-    phony "docs" $ need [destDir </> destName <.> "pdf"]
+cppSrcRules :: FilePath -> FilePath -> FilePath -> [FilePath] -> Rules ()
+cppSrcRules destDir sourceName destName allCppSrcFiles = do
+    let singleHeader = singleHeaderName destName
+    let multiIncludeTargetDir = buildDir </> "exe/*/*" </> multiIncludeDir
+    let multiIncludeTargets = (multiIncludeTargetDir </> ) <$> [testHarnessExe, integrationTestExe]
 
-      where
-        destDir = buildDir </> destName
+    multiIncludeTargets &%> \outs -> case outs of
+        out : _ -> cmake allCppSrcFiles ".." $ takeDirectory out
+        _ -> return ()
+
+    let destCppTestDir = destDir </> cppTestDir
+    let allCppSrcTargets = (destCppTestDir </>) <$> (dropDirectory 5 <$> allCppSrcFiles)
+
+    buildDir </> "exe/*/*" </> singleIncludeDir </> exampleExe %> \out ->
+        cmake (singleHeader : allCppSrcTargets) destDir $ takeDirectory out
+
+    allCppSrcTargets &%> \_ -> do
+        need allCppSrcFiles
+
+        let srcCppTestDir = (".." </> cppTestDir </> sourceName) ++ "/"
+
+        mkDir destCppTestDir
+        unit $ cmd "rsync" "-az" "--delete" srcCppTestDir destCppTestDir
 
 main :: IO ()
 main = do
@@ -167,8 +167,10 @@ main = do
     (singleHeaderIncludes, singleHeaderContents) <- buildHeader inputHeader
 
     shakeArgs shakeOptions{shakeFiles = buildDir} $ do
-        rules sourceName destName allModuleFiles allCppSourceFiles
-        singleHeaderRules destName singleHeaderIncludes singleHeaderContents
+        let destDir = buildDir </> destName
+        rules destDir sourceName destName allModuleFiles
+        cppSrcRules destDir sourceName destName allCppSourceFiles
+        singleHeaderRules destDir destName singleHeaderIncludes singleHeaderContents
 
       where
         sourceName = "Test"
