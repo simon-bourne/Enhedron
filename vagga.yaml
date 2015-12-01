@@ -11,13 +11,14 @@ containers:
     - !UbuntuRelease { version: 15.10 }
     - !UbuntuUniverse
     - !Install [ ca-certificates, make, cmake, clang, gcc, g++, libboost-all-dev, gdbserver,
-                 haskell-platform, rsync, python-pip ]
+                 haskell-platform, rsync, python-pip, texlive-latex-extra, texlive-fonts-recommended ]
     - !Env
       HOME: /root # For cabal
     - !Sh |
         cabal update
         cabal install filemanip megaparsec shake text
         pip install sphinx sphinx-autobuild
+        pip install sphinx_rtd_theme
 
     volumes:
       /tmp: !Tmpfs {size: 1Gi}
@@ -27,12 +28,12 @@ commands:
     description: Add copyright header to C++ files
     accepts-arguments: true
     container: copyright-header
-    work-dir: .
+    work-dir: /work
     run: copyright-header/add-header "$@"
   shake: !Command
     description: Build and test everything
     accepts-arguments: true
     container: build
-    work-dir: haskell
+    work-dir: /work/haskell
     environ: { HOME: /root }
     run: ./Build.hs "$@"

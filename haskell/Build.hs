@@ -32,16 +32,15 @@ copyHeader destDir input = do
     copyFile' input dest
 
 cmake :: [FilePath] -> FilePath -> FilePath -> Action ()
-cmake additionalDependencies srcRoot out = do
+cmake additionalDependencies srcRoot exeDir = do
     let cmakeListsFile = "CMakeLists.txt"
     absoluteSrcRoot <- liftIO $ canonicalizePath srcRoot
 
     need ((srcRoot </> cmakeListsFile) : additionalDependencies)
 
-    let exeDir = takeDirectory out
     mkDir exeDir
 
-    let [compiler, variant, _, _] = lastN 4 $ splitPath out
+    let [compiler, variant, _] = lastN 3 $ splitPath exeDir
     let (cxx, cc) = cxxCompiler compiler
     let env = [Cwd exeDir, AddEnv "CMAKE_BUILD_TYPE" variant, AddEnv "CXX" cxx, AddEnv "CC" cc]
 
@@ -87,30 +86,41 @@ rules sourceName destName allModuleFiles allCppSrcFiles = do
     let allModuleTargets = (destDir </>) <$> (dropDirectory 3 <$> allModuleFiles)
     let licenseFilename = "LICENSE_1.0.txt"
     let licenseTarget = destDir </> licenseFilename
-    let docsTarget = "docs"
+    let htmlDocsTarget = "docs"
+    let pdfDocs = destDir </> destName <.> "pdf"
+
+    let testHarnessExe = "test-harness"
+    let integrationTestExe = "integration-test"
+    let exampleExe = "example"
+
+    let multiIncludeDir = "multi-include"
+    let singleIncludeDir = "single-include"
 
     phony "clean" $ do
         putNormal "Cleaning files in build"
         removeFilesAfter "../build" ["//*"]
 
     phony "quick" $ do
-        testOutput <- readFile' $ testLogTarget "gcc" "Debug" "multi-include" "test-harness"
+        testOutput <- readFile' $ testLogTarget "gcc" "Debug" multiIncludeDir testHarnessExe
         putNormal testOutput
 
     let compilers = ["gcc", "clang-3.6"]
     let variants = ["Debug", "Release"]
-    let exesDetail = [("single-include", "example"), ("multi-include", "test-harness")]
+    let exesDetail = [(singleIncludeDir, exampleExe), (multiIncludeDir, testHarnessExe)]
 
-    want ([docsTarget, licenseTarget] ++ allModuleTargets ++ testMatrix compilers variants exesDetail)
+    want ([htmlDocsTarget, pdfDocs, licenseTarget] ++ allModuleTargets ++ testMatrix compilers variants exesDetail)
 
     licenseTarget %> \out -> copyFile' (".." </> licenseFilename) out
 
-    buildDir </> "exe/*/*/single-include/*" %> \out -> do
-        mkDir destCppTestDir
-        cmake (singleHeader : allCppSrcTargets) destDir out
+    buildDir </> "exe/*/*" </> singleIncludeDir </> exampleExe %> \out ->
+        cmake (singleHeader : allCppSrcTargets) destDir $ takeDirectory out
 
-    buildDir </> "exe/*/*/multi-include/*" %> \out -> do
-        cmake allCppSrcFiles ".." out
+    let multiIncludeTargetDir = buildDir </> "exe/*/*" </> multiIncludeDir
+    let multiIncludeTargets = (multiIncludeTargetDir </> ) <$> [testHarnessExe, integrationTestExe]
+
+    multiIncludeTargets &%> \outs -> case outs of
+        out : _ -> cmake allCppSrcFiles ".." $ takeDirectory out
+        _ -> return ()
 
     buildDir </> "test/*/*/*/*" <.> "log" %> \out -> do
         let tailPath = lastN 4 $ splitPath out
@@ -133,7 +143,12 @@ rules sourceName destName allModuleFiles allCppSrcFiles = do
         mkDir destCppTestDir
         unit $ cmd "rsync" "-az" "--delete" srcCppTestDir destCppTestDir
 
-    phony docsTarget $ unit $ cmd (Cwd "../modules/Test/docs") "make" "html"
+    let docsSrc = "../modules" </> sourceName </> "docs"
+    pdfDocs %> \out -> do
+        unit $ cmd (Cwd docsSrc) "make" "latexpdf"
+        copyFile' (buildDir </> "docs/latex" </> destName <.> "pdf") pdfDocs
+
+    phony htmlDocsTarget $ unit $ cmd (Cwd docsSrc) "make" "html"
 
       where
         destDir = buildDir </> destName
