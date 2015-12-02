@@ -33,7 +33,7 @@ commands:
     work-dir: /work/haskell
     environ: { HOME: /root }
     run: ./Build.hs "$@"
-  doc: !Command
+  docs: !Command
     <<: *build
     description: Build docs
     run: ./Build.hs docs
