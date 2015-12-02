@@ -20,13 +20,13 @@ containers:
       /tmp: !Tmpfs {size: 1Gi}
 
 commands:
-  add-copyright-headers: !Command
+  add-copyright: !Command
     description: Add copyright header to C++ files
     accepts-arguments: true
     container: build
     work-dir: /work
     run: copyright-header/add-header "$@"
-  shake: &shake !Command
+  build: &build !Command
     description: Build and test everything
     accepts-arguments: true
     container: build
@@ -34,14 +34,14 @@ commands:
     environ: { HOME: /root }
     run: ./Build.hs "$@"
   doc: !Command
-    <<: *shake
+    <<: *build
     description: Build docs
     run: ./Build.hs docs
   quick: !Command
-    <<: *shake
+    <<: *build
     description: Build with gcc only in debug mode
     run: ./Build.hs quick
   clean: !Command
-    <<: *shake
+    <<: *build
     description: Clean the build
     run: ./Build.hs clean
