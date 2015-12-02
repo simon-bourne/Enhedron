@@ -1,17 +1,12 @@
 containers:
-  copyright-header:
-    setup:
-    - !UbuntuRelease { version: 15.10 }
-    - !UbuntuUniverse
-    - !Install [ ca-certificates, ruby, ruby-dev, zlib1g-dev, make, build-essential, libicu-dev ]
-    - !Sh gem install copyright-header
-
   build:
     setup:
     - !UbuntuRelease { version: 15.10 }
     - !UbuntuUniverse
     - !Install [ ca-certificates, make, cmake, clang, gcc, g++, libboost-all-dev, gdbserver,
-                 haskell-platform, rsync, python-pip, texlive-latex-extra, texlive-fonts-recommended ]
+                 ruby, libicu-dev, python-pip,
+                 haskell-platform, rsync, texlive-latex-extra, texlive-fonts-recommended ]
+    - !BuildDeps [ ruby-dev, zlib1g-dev ]
     - !Env
       HOME: /root # For cabal
     - !Sh |
@@ -19,6 +14,7 @@ containers:
         cabal install filemanip megaparsec shake text
         pip install sphinx sphinx-autobuild
         pip install sphinx_rtd_theme
+        gem install copyright-header
 
     volumes:
       /tmp: !Tmpfs {size: 1Gi}
@@ -27,13 +23,25 @@ commands:
   add-copyright-headers: !Command
     description: Add copyright header to C++ files
     accepts-arguments: true
-    container: copyright-header
+    container: build
     work-dir: /work
     run: copyright-header/add-header "$@"
-  shake: !Command
+  shake: &shake !Command
     description: Build and test everything
     accepts-arguments: true
     container: build
     work-dir: /work/haskell
     environ: { HOME: /root }
     run: ./Build.hs "$@"
+  doc: !Command
+    <<: *shake
+    description: Build docs
+    run: ./Build.hs docs
+  quick: !Command
+    <<: *shake
+    description: Build with gcc only in debug mode
+    run: ./Build.hs quick
+  clean: !Command
+    <<: *shake
+    description: Clean the build
+    run: ./Build.hs clean
