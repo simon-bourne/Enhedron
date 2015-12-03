@@ -7,33 +7,44 @@ import Development.Shake.FilePath
 import SingleInclude(writeHeader, buildHeader)
 import System.FilePath.Find (find, fileType, FileType(RegularFile, Directory), (==?))
 import Control.Applicative ((<$>))
-import System.Directory (canonicalizePath)
+import System.Directory (canonicalizePath, createDirectoryIfMissing)
 import Data.Text (Text)
 import Control.Monad (void)
 
 lastN :: Int -> [a] -> [a]
 lastN n xs = drop (length xs - n) xs
 
-buildDir, moduleFilesDir, enhedron, cppTestDir, testHarnessExe, integrationTestExe, exampleExe :: FilePath
-buildDir = "../build"
-moduleFilesDir = "../modules"
-enhedron = "Enhedron"
-cppTestDir = "cpp/test/src"
-testHarnessExe = "test-harness"
-integrationTestExe = "integration-test"
-exampleExe = "example"
+-- TODO: All path generating funcs should be "description<Src|Dest><File|Dir|Path>
+-- All rules are named "description<Rule>"
 
-multiIncludeDir, singleIncludeDir, cmakeListsFlagsFile :: FilePath
-multiIncludeDir = "multi-include"
-singleIncludeDir = "single-include"
+destDirPath, moduleSrcDirPath, enhedronDir, cppTestDir, testHarnessExeFile, integrationTestExeFile, introductoryExampleFile :: FilePath
+destDirPath = "../build"
+moduleSrcDirPath = "../modules"
+enhedronDir = "Enhedron"
+cppTestDir = "cpp/test/src"
+testHarnessExeFile = "test-harness"
+integrationTestExeFile = "integration-test"
+introductoryExampleFile = "Introductory"
+
+multiIncludeDestDir, singleIncludeDestDir, cmakeListsFlagsFile :: FilePath
+multiIncludeDestDir = "multi-include"
+singleIncludeDestDir = "single-include"
+cmakeListsFile = "CMakeLists.txt"
 cmakeListsFlagsFile = "CMakeLists.flags.txt"
+licenseFile = "LICENSE_1.0.txt"
 
 compilers = ["gcc", "clang-3.6"]
 variants = ["Debug", "Release"]
 
-destDir, singleHeader :: (?destName :: FilePath) => FilePath
-destDir = buildDir </> ?destName
-singleHeader = buildDir </> ?destName  </> "cpp/single-include" </> ?destName <.> "h"
+moduleDestDirPath, singleHeaderDestFilePath, cmakeListsFlagsDestFilePath, licenseDestFilePath, pdfDestFilePath :: (?destName :: FilePath) => FilePath
+moduleDestDirPath = destDirPath </> ?destName
+singleHeaderDestFilePath = destDirPath </> ?destName  </> "cpp/single-include" </> ?destName <.> "h"
+cmakeListsFlagsDestFilePath = moduleDestDirPath </> cmakeListsFlagsFile
+licenseDestFilePath = moduleDestDirPath </> licenseFile
+pdfDestFilePath = moduleDestDirPath </> ?destName <.> "pdf"
+
+allModuleDestFilePaths :: (?destName :: FilePath) => [FilePath] -> [FilePath]
+allModuleDestFilePaths allModuleSrcFilePaths = (moduleDestDirPath </>) <$> (dropDirectory 3 <$> allModuleSrcFilePaths)
 
 dropDirectory :: Int -> FilePath -> FilePath
 dropDirectory c
@@ -41,30 +52,29 @@ dropDirectory c
     | otherwise = dropDirectory1 . dropDirectory (c - 1)
 
 mkDir :: FilePath -> Action ()
-mkDir dir = unit $ cmd "mkdir" "-p" dir
+mkDir dir = liftIO $ createDirectoryIfMissing True dir
 
 copyHeader :: FilePath -> FilePath -> Action ()
-copyHeader destDir input = do
-    let dest = destDir </> (dropDirectory1 input)
+copyHeader moduleDestDirPath input = do
+    let dest = moduleDestDirPath </> (dropDirectory1 input)
     mkDir $ takeDirectory dest
     copyFile' input dest
 
 allFilesIn :: FilePath -> IO [FilePath]
 allFilesIn = find (fileType ==? Directory) (fileType ==? RegularFile)
 
+targetHeaders :: (?destName :: FilePath) => [FilePath] -> [FilePath]
+targetHeaders allSingleHeaderSrcFilePaths =
+    ((moduleDestDirPath </>) <$> (dropDirectory 1 <$> allSingleHeaderSrcFilePaths))
+
 singleHeaderRules :: (?destName :: FilePath) => [FilePath] -> Text -> Rules ()
-singleHeaderRules singleHeaderDeps singleHeaderContents = do
-    let targetHeaders = singleHeader : ((destDir </>) <$> (dropDirectory 1 <$> singleHeaderDeps))
-
-    want targetHeaders
-
-    targetHeaders &%> \_ -> do
-        mapM_ (copyHeader destDir) singleHeaderDeps
-        liftIO $ writeHeader singleHeader singleHeaderContents
+singleHeaderRules allSingleHeaderSrcFilePaths singleHeaderContents = do
+    targetHeaders allSingleHeaderSrcFilePaths &%> \_ -> mapM_ (copyHeader moduleDestDirPath) allSingleHeaderSrcFilePaths
+    singleHeaderDestFilePath %> \_ -> liftIO $ writeHeader singleHeaderDestFilePath singleHeaderContents
 
 testLogTarget :: FilePath -> FilePath -> FilePath -> FilePath -> FilePath
 testLogTarget compiler variant includeType name =
-    buildDir </> "test" </> compiler </> variant </> includeType </> name <.> "log"
+    destDirPath </> "test" </> compiler </> variant </> includeType </> name <.> "log"
 
 testMatrix :: [FilePath] -> [FilePath] -> [(FilePath, FilePath)] -> [FilePath]
 testMatrix compilers variants exeDetails =
@@ -72,74 +82,70 @@ testMatrix compilers variants exeDetails =
 
 shortcutRules :: (?destName :: FilePath) => Rules ()
 shortcutRules = do
-    phony "docs" $ need [destDir </> ?destName <.> "pdf"]
+    phony "docs" $ need [moduleDestDirPath </> ?destName <.> "pdf"]
 
     phony "clean" $ do
         putNormal "Cleaning files in build"
-        removeFilesAfter buildDir ["//*"]
+        removeFilesAfter destDirPath ["//*"]
 
     phony "quick" $ do
-        testOutput <- readFile' $ testLogTarget "gcc" "Debug" multiIncludeDir testHarnessExe
+        testOutput <- readFile' $ testLogTarget "gcc" "Debug" multiIncludeDestDir testHarnessExeFile
         putNormal testOutput
 
+wantRules :: (?destName :: FilePath, ?sourceName :: FilePath) => [FilePath] -> [FilePath] -> Rules ()
+wantRules allModuleSrcFilePaths singleHeaderIncludes =
+    let exesDetail = [(singleIncludeDestDir, introductoryExampleFile), (multiIncludeDestDir, testHarnessExeFile)]
+        testLogFiles = testMatrix compilers variants exesDetail
+        individualFiles = [singleHeaderDestFilePath, pdfDestFilePath, licenseDestFilePath, cmakeListsFlagsDestFilePath]
+    in
+    want (individualFiles ++ allModuleDestFilePaths allModuleSrcFilePaths ++ testLogFiles ++ targetHeaders singleHeaderIncludes)
+
 rules :: (?destName :: FilePath, ?sourceName :: FilePath) => [FilePath] -> Rules ()
-rules allModuleFiles = do
-    let allModuleTargets = (destDir </>) <$> (dropDirectory 3 <$> allModuleFiles)
-    let licenseFilename = "LICENSE_1.0.txt"
-    let licenseTarget = destDir </> licenseFilename
-    let pdfDocs = destDir </> ?destName <.> "pdf"
-    let cmakeListsFlagsTarget = destDir </> cmakeListsFlagsFile
+rules allModuleSrcFilePaths = do
+    licenseDestFilePath %> \out -> copyFile' (".." </> licenseFile) out
+    cmakeListsFlagsDestFilePath %> \out -> copyFile' (".." </> cmakeListsFlagsFile) out
 
-    let exesDetail = [(singleIncludeDir, exampleExe), (multiIncludeDir, testHarnessExe)]
-
-    want ([pdfDocs, licenseTarget, cmakeListsFlagsTarget] ++ allModuleTargets ++ testMatrix compilers variants exesDetail)
-
-    licenseTarget %> \out -> copyFile' (".." </> licenseFilename) out
-    cmakeListsFlagsTarget %> \out -> copyFile' (".." </> cmakeListsFlagsFile) out
-
-    buildDir </> "test/*/*/*/*" <.> "log" %> \out -> do
+    destDirPath </> "test/*/*/*/*" <.> "log" %> \out -> do
         let tailPath = lastN 4 $ splitPath out
-        let exePath = dropExtension (buildDir </> (foldl (</>) "exe" tailPath))
+        let exePath = dropExtension (destDirPath </> (foldl (</>) "exe" tailPath))
 
         need [exePath]
         unit $ cmd (FileStdout out) exePath
 
     let examplesDir = "docs/examples"
-    allModuleTargets &%> \_ -> do
-        let excludes = ["cpp/", "docs/examples" ++ "/", licenseFilename, cmakeListsFlagsFile, ?destName <.> "pdf"]
+    allModuleDestFilePaths allModuleSrcFilePaths &%> \_ -> do
+        let excludes = ["cpp/", "docs/examples" ++ "/", licenseFile, cmakeListsFlagsFile, ?destName <.> "pdf"]
         let excludeFlags = foldr (\a b -> "--exclude" : a : b) [] (('/' :) <$> excludes)
         putNormal "Running rsync"
-        need allModuleFiles
+        need allModuleSrcFilePaths
 
-        unit $ cmd "rsync" "-az" "--delete" excludeFlags ((moduleFilesDir </> ?sourceName) ++ "/") destDir
+        unit $ cmd "rsync" "-az" "--delete" excludeFlags ((moduleSrcDirPath </> ?sourceName) ++ "/") moduleDestDirPath
 
     -- TODO: Name all variables like path.
     let docsSrc = "../modules" </> ?sourceName </> "docs"
-    let examplesDest = destDir </> examplesDir
+    let examplesDest = moduleDestDirPath </> examplesDir
     let examplesSrc = ".." </> cppTestDir </> ?sourceName </> "Examples"
 
     examplesDest </> "*.cpp" %> \out ->
         let filename = takeFileName out in
         unit $ cmd (FileStdout out) "tail" "-n" "+8" (examplesSrc </> filename)
 
-    let pdfDocBuildFile = buildDir </> "docs/latex" </> ?destName <.> "pdf"
+    let pdfDocBuildFile = destDirPath </> "docs/latex" </> ?destName <.> "pdf"
     pdfDocBuildFile %> \out -> do
-        let docsDest = destDir </> "docs"
+        let docsDest = moduleDestDirPath </> "docs"
         putNormal "Building docs"
         allExamples <- getDirectoryFiles examplesSrc ["//*"]
         allDocsSrcs <- getDirectoryFiles docsSrc ["//*"]
         need (((docsDest </> ) <$> allDocsSrcs) ++ ((examplesDest </>) <$> allExamples))
         unit $ cmd (Cwd docsDest) "make" "latexpdf" "html"
 
-    pdfDocs %> \out -> copyFile' pdfDocBuildFile pdfDocs
+    pdfDestFilePath %> \out -> copyFile' pdfDocBuildFile pdfDestFilePath
 
 cmake :: (?destName :: FilePath) => [FilePath] -> FilePath -> FilePath -> Action ()
 cmake additionalDependencies srcRoot exeDir = do
-    let cmakeListsFile = "CMakeLists.txt"
-    let cmakeListsFlagsTarget = destDir </> cmakeListsFlagsFile
     absoluteSrcRoot <- liftIO $ canonicalizePath srcRoot
 
-    need (cmakeListsFlagsTarget : (srcRoot </> cmakeListsFile) : additionalDependencies)
+    need (cmakeListsFlagsDestFilePath : (srcRoot </> cmakeListsFile) : additionalDependencies)
 
     mkDir exeDir
 
@@ -156,19 +162,19 @@ cmake additionalDependencies srcRoot exeDir = do
 
 cppSrcRules :: (?destName :: FilePath, ?sourceName :: FilePath) => [FilePath] -> [FilePath] -> Rules ()
 cppSrcRules allCppSrcFiles singleHeaderIncludes = do
-    let multiIncludeTargetDir = buildDir </> "exe/*/*" </> multiIncludeDir
-    let multiIncludeTargets = (multiIncludeTargetDir </> ) <$> [testHarnessExe, integrationTestExe]
+    let multiIncludeTargetDir = destDirPath </> "exe/*/*" </> multiIncludeDestDir
+    let multiIncludeTargets = (multiIncludeTargetDir </> ) <$> [testHarnessExeFile, integrationTestExeFile]
 
     multiIncludeTargets &%> \outs -> case outs of
         out : _ -> cmake (singleHeaderIncludes ++ allCppSrcFiles) ".." $ takeDirectory out
         _ -> return ()
 
-    let destCppTestDir = destDir </> cppTestDir
+    let destCppTestDir = moduleDestDirPath </> cppTestDir
     let allCppSrcTargets = (destCppTestDir </>) <$> (dropDirectory 5 <$> allCppSrcFiles)
 
-    buildDir </> "exe/*/*" </> singleIncludeDir </> exampleExe %> \out ->
-        let additionalDeps = singleHeader : singleHeaderIncludes ++ allCppSrcTargets in
-        cmake additionalDeps destDir $ takeDirectory out
+    destDirPath </> "exe/*/*" </> singleIncludeDestDir </> introductoryExampleFile %> \out ->
+        let additionalDeps = singleHeaderDestFilePath : singleHeaderIncludes ++ allCppSrcTargets in
+        cmake additionalDeps moduleDestDirPath $ takeDirectory out
 
     allCppSrcTargets &%> \_ -> do
         need allCppSrcFiles
@@ -180,13 +186,14 @@ cppSrcRules allCppSrcFiles singleHeaderIncludes = do
 
 main :: IO ()
 main = let { ?sourceName = "Test"; ?destName = "MosquitoNet" } in do
-    allModuleFiles <- allFilesIn moduleFilesDir
+    allModuleSrcFilePaths <- allFilesIn moduleSrcDirPath
     allCppSourceFiles <- allFilesIn (".." </> cppTestDir </> ?sourceName)
-    let inputHeader = enhedron </> ?sourceName <.> "h"
+    let inputHeader = enhedronDir </> ?sourceName <.> "h"
     (singleHeaderIncludes, singleHeaderContents) <- buildHeader inputHeader
 
-    shakeArgs shakeOptions{shakeFiles = buildDir} $ do
+    shakeArgs shakeOptions{shakeFiles = destDirPath} $ do
+        wantRules allModuleSrcFilePaths singleHeaderIncludes
         shortcutRules
-        rules allModuleFiles
+        rules allModuleSrcFilePaths
         cppSrcRules allCppSourceFiles singleHeaderIncludes
         singleHeaderRules singleHeaderIncludes singleHeaderContents
