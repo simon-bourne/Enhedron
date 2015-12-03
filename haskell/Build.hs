@@ -1,6 +1,6 @@
 #!/usr/bin/env runhaskell
 
-{-# LANGUAGE ImplicitParams #-}
+{-# LANGUAGE ImplicitParams, NoMonomorphismRestriction #-}
 
 import Development.Shake
 import Development.Shake.FilePath
@@ -13,9 +13,6 @@ import Control.Monad (void)
 
 lastN :: Int -> [a] -> [a]
 lastN n xs = drop (length xs - n) xs
-
--- TODO: All path generating funcs should be "description<Src|Dest><File|Dir|Path>
--- All rules are named "description<Rule>"
 
 destDirPath, moduleSrcDirPath, enhedronDir, cppTestDir, testHarnessExeFile :: FilePath
 destDirPath = "../build"
@@ -71,20 +68,21 @@ copyHeader moduleDestDirPath input = do
 allFilesIn :: FilePath -> IO [FilePath]
 allFilesIn = find (fileType ==? Directory) (fileType ==? RegularFile)
 
-targetHeaders :: (?destName :: FilePath) => [FilePath] -> [FilePath]
-targetHeaders allSingleHeaderSrcFilePaths =
-    ((moduleDestDirPath </>) <$> (dropDirectory 1 <$> allSingleHeaderSrcFilePaths))
-
 singleHeaderRule :: (?destName :: FilePath) => [FilePath] -> Text -> Rules ()
 singleHeaderRule allDepSrcFilePaths contents = do
     singleHeaderDestFilePath %> \_ -> do
         need allDepSrcFilePaths
         liftIO $ writeHeader singleHeaderDestFilePath contents
 
-singleHeaderDepsRule :: (?destName :: FilePath) => [FilePath] -> Rules ()
-singleHeaderDepsRule allDepSrcFilePaths = do
-    targetHeaders allDepSrcFilePaths &%> \_ ->
-        mapM_ (copyHeader moduleDestDirPath) allDepSrcFilePaths
+targetHeader :: (?destName :: FilePath) => FilePath -> FilePath
+targetHeader headerSrcFilePath = moduleDestDirPath </> (dropDirectory 1 headerSrcFilePath)
+
+allSingleHeaderDepsRules :: (?destName :: FilePath) => [FilePath] -> Rules ()
+allSingleHeaderDepsRules allDepSrcFilePaths =
+    mapM_ singleHeaderDepsRule allDepSrcFilePaths
+      where
+        singleHeaderDepsRule srcHeader = targetHeader srcHeader %> \_ ->
+            copyHeader moduleDestDirPath srcHeader
 
 testLogTarget :: FilePath -> FilePath -> FilePath -> FilePath -> FilePath
 testLogTarget compiler variant includeType name =
@@ -115,7 +113,7 @@ defaultTargets allModuleSrcFilePaths singleHeaderIncludes =
         [singleHeaderDestFilePath, pdfDestFilePath, licenseDestFilePath, cmakeListsFlagsDestFilePath] ++
         allModuleDestFilePaths allModuleSrcFilePaths ++
         testLogFiles ++
-        targetHeaders singleHeaderIncludes)
+        (targetHeader <$> singleHeaderIncludes))
 
 testRule :: (?destName :: FilePath, ?sourceName :: FilePath) => Rules ()
 testRule = do
@@ -195,7 +193,7 @@ cppSingleIncludeRules allCppSrcFilePaths singleHeaderIncludes = do
     let allCppDestFilePaths = (destCppTestDir </>) <$> (dropDirectory 5 <$> allCppSrcFilePaths)
 
     destDirPath </> "exe/*/*" </> singleIncludeDestDir </> introductoryExampleFile %> \out ->
-        let additionalDeps = singleHeaderDestFilePath : singleHeaderIncludes ++ allCppDestFilePaths in
+        let additionalDeps = singleHeaderDestFilePath : allCppDestFilePaths in
         cmake additionalDeps moduleDestDirPath $ takeDirectory out
 
     allCppDestFilePaths &%> \_ -> do
@@ -223,4 +221,4 @@ main = let { ?sourceName = "Test"; ?destName = "MosquitoNet" } in do
         cppSingleIncludeRules allCppSourceFiles singleHeaderIncludes
         cppMultiIncludeExesRule allCppSourceFiles singleHeaderIncludes
         singleHeaderRule singleHeaderIncludes singleHeaderContents
-        singleHeaderDepsRule singleHeaderIncludes
+        allSingleHeaderDepsRules singleHeaderIncludes
