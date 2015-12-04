@@ -64,7 +64,9 @@ namespace Enhedron { namespace Test { namespace Impl { namespace Impl_Suite {
     using PathList = vector<shared_ptr<vector<regex>>>;
 
     class ContextResultsRecorder final : public NoCopy {
-        vector<unique_ptr<ResultContext>> contextStack_;
+        using Stack = vector<unique_ptr<ResultContext>>;
+
+        Stack contextStack_;
         size_t notifiedEnd = 0;
     public:
         ContextResultsRecorder(unique_ptr<ResultContext> root) {
@@ -86,7 +88,11 @@ namespace Enhedron { namespace Test { namespace Impl { namespace Impl_Suite {
         }
 
         unique_ptr<ResultTest> test(const string &name) {
-            for (auto context = contextStack_.begin() + notifiedEnd; context != contextStack_.end(); ++context) {
+            for (
+                    auto context = contextStack_.begin() + static_cast<Stack::difference_type>(notifiedEnd);
+                    context != contextStack_.end();
+                    ++context)
+            {
                 (*context)->beforeFirstTestRuns();
             }
 
