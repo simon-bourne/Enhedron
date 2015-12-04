@@ -2,6 +2,7 @@
 <module type="CPP_MODULE" version="4">
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/CMakeLists.flags.txt" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/CMakeLists.txt" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/cpp/test/src/Test/Assert.cpp" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/cpp/test/src/Test/CommandLine.cpp" isTestSource="false" />
