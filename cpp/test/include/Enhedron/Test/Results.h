@@ -23,6 +23,7 @@ namespace Enhedron { namespace Test { namespace Impl { namespace Impl_Results {
     using std::ostream;
     using std::endl;
     using std::vector;
+    using std::move;
 
     using Assertion::FailureHandler;
     using Assertion::Variable;
@@ -58,23 +59,46 @@ namespace Enhedron { namespace Test { namespace Impl { namespace Impl_Results {
         uint64_t failedChecks() const { return failedChecks_; }
     };
 
-    class ResultTest: public NoCopy, public FailureHandler {
+    // Wrapper, as we may add more functionality here. Such as tracking how much of the stack has
+    // been seen before.
+    class NameStack final: public NoCopy {
+        vector<string> stack_;
     public:
-        virtual ~ResultTest() {}
-        virtual unique_ptr<ResultTest> section(string description) = 0;
-        virtual void beforeFirstFailure() = 0;
-        virtual void failByException(const exception& e) = 0;
-        virtual void finish(const Stats& stats) = 0;
+        const vector<string>& stack() const { return stack_; }
+
+        void push(string name) {
+            stack_.emplace_back(move(name));
+        }
+
+        void pop() {
+            Assert( ! VAR(stack_.empty()));
+            stack_.pop_back();
+        }
     };
 
-    class ResultContext: public NoCopy {
-    public:
-        virtual ~ResultContext() {}
-        virtual unique_ptr<ResultContext> child(const string& name) = 0;
-        virtual void beforeFirstTestRuns() = 0;
-        virtual void beforeFirstFailure() = 0;
-        virtual unique_ptr<ResultTest> test(const string& name) = 0;
+    struct Results: public FailureHandler {
+        virtual ~Results() {}
+
         virtual void finish(const Stats& stats) = 0;
+
+        virtual void beginContext(const NameStack& contextStack, const string& name) = 0;
+        virtual void endContext(const Stats& stats, const NameStack& contextStack, const string& name) = 0;
+
+        virtual void beginGiven(const NameStack& context, const string& given) = 0;
+        virtual void endGiven(const Stats& stats, const NameStack& context, const string& given) = 0;
+
+        virtual void beginWhen(const NameStack& context,
+                               const string& given,
+                               const NameStack& whenStack,
+                               const string& when) = 0;
+        virtual void endWhen(const Stats& stats,
+                             const NameStack& context,
+                             const string& given,
+                             const NameStack& whenStack,
+                             const string& when) = 0;
+
+        virtual void failByException(const exception& e) = 0;
+
     };
 
     enum class Verbosity {
@@ -89,6 +113,65 @@ namespace Enhedron { namespace Test { namespace Impl { namespace Impl_Results {
         VARIABLES
     };
 
+    class HumanResults final: public Results {
+        Out<ostream> output_;
+        size_t depth_ = 0;
+        Verbosity verbosity_;
+        bool contextWritten_ = false;
+    public:
+        HumanResults(Out<ostream> output, Verbosity verbosity) :
+            output_(output), verbosity_(verbosity)
+        {}
+
+        virtual void finish(const Stats& stats) override {}
+
+        virtual void beginContext(const NameStack& contextStack, const string& name) override {
+            if (verbosity_ >= Verbosity::CONTEXTS) {
+                if ( ! contextStack.stack().empty()) {
+                    for (const auto& parentName : contextStack.stack()) {
+                        *output_ << parentName << "/";
+                    }
+
+                }
+
+                *output_ << name << "\n";
+                contextWritten_ = true;
+            }
+            else {
+                contextWritten_ = false;
+            }
+        }
+
+        virtual void endContext(const Stats& stats, const NameStack& context, const string& name) override {
+            // TODO: Write context here.
+            contextWritten_ = false;
+        }
+
+        virtual void beginGiven(const NameStack& context, const string& given) {}
+        virtual void endGiven(const Stats& stats, const NameStack& context, const string& given) {}
+
+        virtual void beginWhen(const NameStack& context,
+                               const string& given,
+                               const NameStack& whenStack,
+                               const string& when) override {}
+        virtual void endWhen(const Stats& stats,
+                             const NameStack& context,
+                             const string& given,
+                             const NameStack& whenStack,
+                             const string& when) override {}
+
+        virtual void failByException(const exception& e) override {}
+
+        virtual bool notifyPassing() const override { return verbosity_ >= Verbosity::CHECKS; }
+
+        virtual void fail(optional<string> description, const string &expressionText, const vector <Variable> &variableList) override {
+        }
+
+        virtual void pass(optional<string> description, const string &expressionText, const vector <Variable> &variableList) override {
+
+        }
+    };
+/*
     class HumanResultTest final: public ResultTest {
         Out<ostream> outputStream_;
         size_t depth_;
@@ -121,9 +204,9 @@ namespace Enhedron { namespace Test { namespace Impl { namespace Impl_Results {
             return make_unique<HumanResultTest>(outputStream_, depth_ + 1, verbosity_);
         }
 
-        virtual bool notifyPassing() const override { return verbosity_ >= Verbosity::CHECKS; }
-
         virtual void beforeFirstFailure() override {}
+
+        virtual bool notifyPassing() const override { return verbosity_ >= Verbosity::CHECKS; }
 
         virtual void fail(optional<string> description, const string &expressionText, const vector <Variable> &variableList) override {
             indent(1);
@@ -235,12 +318,13 @@ namespace Enhedron { namespace Test { namespace Impl { namespace Impl_Results {
             }
         }
     };
+    */
 }}}}
 
 namespace Enhedron { namespace Test {
-    using Impl::Impl_Results::ResultContext;
-    using Impl::Impl_Results::ResultTest;
-    using Impl::Impl_Results::HumanResultRootContext;
+    using Impl::Impl_Results::NameStack;
+    using Impl::Impl_Results::Results;
+    using Impl::Impl_Results::HumanResults;
     using Impl::Impl_Results::Stats;
     using Impl::Impl_Results::Verbosity;
 }}
