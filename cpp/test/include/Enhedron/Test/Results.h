@@ -25,6 +25,7 @@ namespace Enhedron { namespace Test { namespace Impl { namespace Impl_Results {
     using std::endl;
     using std::vector;
     using std::move;
+    using std::min;
     using std::max;
 
     using Assertion::FailureHandler;
@@ -78,7 +79,7 @@ namespace Enhedron { namespace Test { namespace Impl { namespace Impl_Results {
         }
     };
 
-    struct Results: public FailureHandler {
+    struct Results: public NoCopy {
         virtual ~Results() {}
 
         virtual void finish(const Stats& stats) = 0;
@@ -99,8 +100,26 @@ namespace Enhedron { namespace Test { namespace Impl { namespace Impl_Results {
                              const NameStack& whenStack,
                              const string& when) = 0;
 
-        virtual void failByException(const exception& e) = 0;
+        virtual bool notifyPassing() const = 0;
 
+        virtual void fail(const NameStack& context,
+                          const string& given,
+                          const NameStack& whenStack,
+                          optional<string> description,
+                          const string &expressionText,
+                          const vector <Variable> &variableList) = 0;
+
+        virtual void pass(const NameStack& context,
+                          const string& given,
+                          const NameStack& whenStack,
+                          optional <string> description,
+                          const string &expressionText,
+                          const vector <Variable> &variableList) = 0;
+
+        virtual void failByException(const NameStack& context,
+                                     const string& given,
+                                     const NameStack& whenStack,
+                                     const exception& e) = 0;
     };
 
     enum class Verbosity {
@@ -115,14 +134,34 @@ namespace Enhedron { namespace Test { namespace Impl { namespace Impl_Results {
         VARIABLES
     };
 
+    enum class WrittenState {
+        NONE,
+        CONTEXT,
+        GIVEN
+    };
+
     class HumanResults final: public Results {
         Out<ostream> output_;
         Verbosity verbosity_;
-        bool contextWritten_ = false;
+        WrittenState writtenState_ = WrittenState::NONE;
         size_t whenDepth_ = 0;
+        size_t whenWrittenDepth_ = 0;
+
+        void setMaxWrittenState(WrittenState maxState) {
+            if (writtenState_ > maxState) writtenState_ = maxState;
+        }
+
+        bool writeNeeded(WrittenState state) {
+            if (writtenState_ < state) {
+                writtenState_ = state;
+                return true;
+            }
+
+            return false;
+        }
 
         void writeContext(const NameStack& contextStack) {
-            if (verbosity_ >= Verbosity::CONTEXTS && ! contextWritten_) {
+            if (writeNeeded(WrittenState::CONTEXT)) {
                 if ( ! contextStack.stack().empty()) {
                     *output_ << contextStack.stack().front();
 
@@ -137,16 +176,43 @@ namespace Enhedron { namespace Test { namespace Impl { namespace Impl_Results {
 
                     *output_ << "\n";
                 }
-
-                contextWritten_ = true;
             }
+        }
+
+        void writeGiven(const NameStack& context, const string& given) {
+            writeContext(context);
+
+            if (writeNeeded(WrittenState::GIVEN)) {
+                indent(1);
+                *output_ << "Given: " << given << "\n";
+            }
+        }
+
+        void writeWhenStack(const NameStack& context, const string& given, const NameStack& when) {
+            writeGiven(context, given);
+
+            size_t depth = whenWrittenDepth_;
+            auto startIndex = static_cast<vector<string>::difference_type>(whenWrittenDepth_);
+
+            for (
+                    auto whenIter = when.stack().begin() + startIndex;
+                    whenIter != when.stack().end();
+                    ++whenIter
+                )
+            {
+                ++depth;
+                indent(depth);
+                *output_ << " When: " << *whenIter << "\n";
+            }
+
+            whenWrittenDepth_ = when.stack().size();
         }
 
         void printVariables(const vector <Variable> &variableList) {
             for (const auto& variable : variableList) {
-                indent(whenDepth_ + 1);
+                indent(whenDepth() + 1);
                 (*output_) << variable.name() << " = " << variable.value()
-                << ": file \"" << variable.file() << "\", line " << variable.line() << ".\n";
+                           << ": file \"" << variable.file() << "\", line " << variable.line() << ".\n";
             }
         }
 
@@ -156,33 +222,57 @@ namespace Enhedron { namespace Test { namespace Impl { namespace Impl_Results {
                 --indent;
             }
         }
+
+        size_t whenDepth() const {
+            static constexpr const size_t minDepth = 1;
+
+            return max(minDepth, whenDepth_);
+        }
     public:
         HumanResults(Out<ostream> output, Verbosity verbosity) :
             output_(output), verbosity_(verbosity)
         {}
 
-        virtual void finish(const Stats& stats) override {}
+        virtual void finish(const Stats& stats) override {
+            if (verbosity_ >= Verbosity::SUMMARY) {
+                if (stats.failedTests() > 0) {
+                    *output_ << "FAILED TESTS: " << stats.failedTests() << "\n";
+                }
+
+                if (stats.failedChecks() > 0) {
+                    *output_ << "FAILED CHECKS: " << stats.failedChecks() << "\n";
+                }
+
+                *output_ << "Totals: " <<
+                stats.tests() << " tests, " <<
+                stats.checks() << " checks, " <<
+                stats.fixtures() << " fixtures\n";
+            }
+        }
 
         virtual void beginContext(const NameStack& contextStack, const string& name) override {
-            contextWritten_ = false;
+            setMaxWrittenState(WrittenState::NONE);
         }
 
         virtual void endContext(const Stats& stats, const NameStack& context, const string& name) override {
-            contextWritten_ = false;
+            setMaxWrittenState(WrittenState::NONE);
         }
 
         virtual void beginGiven(const NameStack& context, const string& given) override {
+            setMaxWrittenState(WrittenState::GIVEN);
+
             if (verbosity_ >= Verbosity::CONTEXTS) {
                 writeContext(context);
             }
 
             if (verbosity_ >= Verbosity::FIXTURES) {
-                indent(1);
-                *output_ << "Given: " << given << "\n";
+                writeGiven(context, given);
             }
         }
 
-        virtual void endGiven(const Stats& stats, const NameStack& context, const string& given) override { }
+        virtual void endGiven(const Stats& stats, const NameStack& context, const string& given) override {
+            setMaxWrittenState(WrittenState::CONTEXT);
+        }
 
         virtual void beginWhen(const NameStack& context,
                                const string& given,
@@ -191,8 +281,9 @@ namespace Enhedron { namespace Test { namespace Impl { namespace Impl_Results {
             ++whenDepth_;
 
             if (verbosity_ >= Verbosity::SECTIONS) {
-                indent(whenDepth_);
+                indent(whenDepth());
                 *output_ << " When: " << when << "\n";
+                whenWrittenDepth_ = whenDepth_;
             }
         }
 
@@ -202,31 +293,52 @@ namespace Enhedron { namespace Test { namespace Impl { namespace Impl_Results {
                              const NameStack& whenStack,
                              const string& when) override {
             --whenDepth_;
+            whenWrittenDepth_ = min(whenDepth_, whenWrittenDepth_);
 
             if (whenDepth_ == 0 && verbosity_ >= Verbosity::CHECKS) {
                 *output_ << "\n";
             }
+
+            setMaxWrittenState(WrittenState::GIVEN);
         }
 
         virtual bool notifyPassing() const override { return verbosity_ >= Verbosity::CHECKS; }
 
-        virtual void fail(optional<string> description, const string &expressionText, const vector <Variable> &variableList) override {
-            indent(whenDepth_);
-            (*output_) << "CHECK FAILED: " << expressionText << "\n";
+        virtual void fail(const NameStack& context,
+                          const string& given,
+                          const NameStack& whenStack,
+                          optional<string> description,
+                          const string &expressionText,
+                          const vector <Variable> &variableList) override
+        {
+            writeWhenStack(context, given, whenStack);
+            indent(whenDepth());
+            (*output_) << "FAILED: Then";
+
+            if (description) {
+                *output_ << ": " << *description;
+            }
+
+            *output_ << ": " << expressionText << "\n";
             printVariables(variableList);
         }
 
-        virtual void pass(optional<string> description, const string &expressionText, const vector <Variable> &variableList) override {
-            static constexpr const size_t minDepth = 1;
-            indent(max(minDepth, whenDepth_));
-            (*output_) << " Then: ";
+        virtual void pass(const NameStack& context,
+                          const string& given,
+                          const NameStack& whenStack,
+                          optional <string> description,
+                          const string &expressionText,
+                          const vector <Variable> &variableList) override
+        {
+            indent(whenDepth());
+            (*output_) << " Then";
 
             if (description) {
-                (*output_) << *description;
+                (*output_) << ": " << *description;
             }
 
             if (verbosity_ >= Verbosity::CHECKS_EXPRESSION || ! description) {
-                (*output_) << expressionText;
+                (*output_) << ": " << expressionText;
             }
 
             (*output_) << "\n";
@@ -236,8 +348,11 @@ namespace Enhedron { namespace Test { namespace Impl { namespace Impl_Results {
             }
         }
 
-        virtual void failByException(const exception& e) override {
-            indent(whenDepth_);
+        virtual void failByException(const NameStack& context,
+                                     const string& given,
+                                     const NameStack& whenStack,
+                                     const exception& e) override {
+            indent(whenDepth());
             (*output_) << "TEST FAILED WITH EXCEPTION: " << e.what() << endl;
         }
     };

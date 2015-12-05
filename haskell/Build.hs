@@ -122,6 +122,8 @@ testRule = do
         let exePath = dropExtension (destDirPath </> (foldl (</>) "exe" tailPath))
 
         need [exePath]
+        -- TODO: Output to test results file then generate test.ok file which is the real required target.
+        -- Otherwise, we could fail the build, then run it again and succeed because the file is more recent.
         unit $ cmd (FileStdout out) exePath
 
 docExamplesRule :: (?destName :: FilePath, ?sourceName :: FilePath) => Rules ()

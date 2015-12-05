@@ -108,16 +108,18 @@ namespace Enhedron { namespace Test { namespace Impl { namespace Impl_Suite {
             results_->endWhen(stats, contextStack_, given_, whenStack_, name);
         }
 
-        void failByException(const exception& e) { results_->failByException(e); }
+        void failByException(const exception& e) {
+            results_->failByException(contextStack_, given_, whenStack_, e);
+        }
 
         virtual bool notifyPassing() const override { return results_->notifyPassing(); }
 
         virtual void fail(optional<string> description, const string &expressionText, const vector <Variable> &variableList) override {
-            return results_->fail(description, expressionText, variableList);
+            return results_->fail(contextStack_, given_, whenStack_, description, expressionText, variableList);
         }
 
         virtual void pass(optional<string> description, const string &expressionText, const vector <Variable> &variableList) override {
-            return results_->pass(description, expressionText, variableList);
+            return results_->pass(contextStack_, given_, whenStack_, description, expressionText, variableList);
         }
 
     };
