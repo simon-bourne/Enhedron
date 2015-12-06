@@ -71,7 +71,7 @@ static Suite t("examples", context("assertion",
         int d = 4;
 
         // Assertion example 2:
-        check("a is one and b is two", VAR(a) == 0 && VAR(b) == 1);
+        check("a is zero and b is one", VAR(a) == 0 && VAR(b) == 1);
         // Assertion example 2 end.
 
         // Assertion example 3:
@@ -79,7 +79,7 @@ static Suite t("examples", context("assertion",
         // Assertion example 3 end.
 
         // Assertion example 4:
-        check("a is one and b is two", VAR(a) == 0 && b == 1 && VAR(a + c) == c);
+        check("a is zero and b is one", VAR(a) == 0 && b == 1 && VAR(a + c) == c);
         // Assertion example 4 end.
 
         // Assertion example 5:
