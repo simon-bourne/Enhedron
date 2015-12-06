@@ -1,7 +1,7 @@
 Pretty Printing Your Types
 ==========================
 
-You can either provide an overloaded *operato<<* or specialize *Enhedron::Assertion::Convert*:
+You can either provide an overloaded *operator<<* or specialize *Enhedron::Assertion::Convert*:
 
 .. literalinclude:: ../examples/AllExamples.cpp
    :language: c++
