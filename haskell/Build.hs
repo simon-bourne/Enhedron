@@ -94,7 +94,8 @@ testMatrix compilers variants exeDetails =
 
 shortcutRules :: (?destName :: FilePath) => Rules ()
 shortcutRules = do
-    phony "docs" $ need [moduleDestDirPath </> ?destName <.> "pdf"]
+    let exampleExe = destDirPath </> "exe/gcc/Debug" </> singleIncludeDestDir </> introductoryExampleFile
+    phony "docs" $ need [exampleExe, moduleDestDirPath </> ?destName <.> "pdf"]
 
     phony "clean" $ do
         putNormal "Cleaning files in build"
