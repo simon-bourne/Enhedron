@@ -1,9 +1,10 @@
 if (CMAKE_CXX_COMPILER_ID STREQUAL Clang)
     # using Clang
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall -Werror -pedantic")
+    # -fsanitize=undefined doesn't like libstdc++'s std::hex
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall -Werror -pedantic -fsanitize=address -fno-sanitize-recover")
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL GNU)
     # GCC
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall -Werror -pedantic -fsanitize=address -fsanitize=undefined")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall -Werror -pedantic -fsanitize=address -fsanitize=undefined -fno-sanitize-recover")
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL Intel)
     # using Intel C++
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL MSVC)
