@@ -568,7 +568,7 @@ namespace Enhedron { namespace Test { namespace Impl { namespace Impl_Suite {
             for (const auto& value : container) {
                 stats += exhaustive(
                         [&] (Check& check, auto&&... args) {
-                            functor(ref(check), value, args...);
+                            functor(check, value, args...);
                         },
                         name,
                         results,

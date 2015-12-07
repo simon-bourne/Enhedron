@@ -235,7 +235,7 @@ static Suite v("writing tests",
 
     // Model check multiply begin.
     exhaustive(choice(0, 1, 10), choice(0, 1, 10)).
-        given("2 numbers", [] (Check& check, int x, int y) {
+        given("2 numbers", [] (auto& check, int x, int y) {
             check.when("we multiply them together", [&] {
                 int result = multiply(x, y);
 
