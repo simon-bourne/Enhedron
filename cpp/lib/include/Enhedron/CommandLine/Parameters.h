@@ -310,9 +310,9 @@ namespace Enhedron { namespace CommandLine { namespace Impl { namespace Impl_Par
 
         template<typename Functor>
         ExitStatus runImpl(
-                map<string, vector<string>> optionValues,
+                map<string, vector<string>>,
                 vector<string> positionalArgs,
-                set<string> setFlags,
+                set<string>,
                 Functor&& functor
             )
         {
@@ -449,14 +449,14 @@ namespace Enhedron { namespace CommandLine { namespace Impl { namespace Impl_Par
         void readNamesImpl(
                 Out<set<string>> optionNames,
                 Out<set<string>> allNames,
-                const Flag& flag,
+                const Flag&,
                 const ParamsTail&... paramsTail
         )
         {
             readNames(optionNames, allNames, paramsTail...);
         }
 
-        void readNames(Out<set<string>> optionNames, Out<set<string>> allNames) {}
+        void readNames(Out<set<string>>, Out<set<string>>) {}
 
         template<typename ParamType, typename... ParamsTail>
         void readNames(

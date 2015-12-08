@@ -66,7 +66,7 @@ namespace Enhedron { namespace Impl_TestCommandLine {
              auto exitStatus = args.run(
                  2,
                  argv,
-                 [&] (vector<string> positional) {
+                 [&] (vector<string>) {
                      check.fail(VAR("Expected help"));
                      return ExitStatus::OK;
                  }
@@ -112,7 +112,7 @@ namespace Enhedron { namespace Impl_TestCommandLine {
 
              auto exitStatus = Arguments(out(helpOut), out(errorOut), "", 40).run(
                      2, argv,
-                     [&](const string& arg1, const string& arg2, vector<string> positional) {
+                     [&](const string&, const string&, vector<string>) {
                          check.fail(VAR("Should show help"));
 
                          return ExitStatus::OK;
@@ -144,7 +144,7 @@ namespace Enhedron { namespace Impl_TestCommandLine {
 
             auto exitStatus = Arguments(out(helpOut), out(errorOut), "").run(
                     5, argv,
-                    [&](const vector<string>& vectorOption, vector<string> positional) {
+                    [&](const vector<string>& vectorOption, vector<string>) {
                         if (check(VAR(vectorOption.size()) == 2u)) {
                             check(VAR(vectorOption[0]) == "value0");
                             check(VAR(vectorOption[1]) == "value1");

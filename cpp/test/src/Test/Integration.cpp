@@ -14,7 +14,7 @@ namespace Enhedron {
     using namespace Test;
 
     static Test::Suite u("Integration",
-        given("empty", [] (Check& check) {
+        given("empty", [] (Check&) {
         }),
         given("simple", [] (Check& check) {
             check(VAR(1) == 1);

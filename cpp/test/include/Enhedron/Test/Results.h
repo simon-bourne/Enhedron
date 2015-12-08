@@ -258,11 +258,11 @@ namespace Enhedron { namespace Test { namespace Impl { namespace Impl_Results {
             }
         }
 
-        virtual void beginContext(const NameStack& contextStack, const string& name) override {
+        virtual void beginContext(const NameStack&, const string&) override {
             setMaxWrittenState(WrittenState::NONE);
         }
 
-        virtual void endContext(const Stats& stats, const NameStack& context, const string& name) override {
+        virtual void endContext(const Stats&, const NameStack&, const string&) override {
             setMaxWrittenState(WrittenState::NONE);
         }
 
@@ -278,13 +278,13 @@ namespace Enhedron { namespace Test { namespace Impl { namespace Impl_Results {
             }
         }
 
-        virtual void endGiven(const Stats& stats, const NameStack& context, const string& given) override {
+        virtual void endGiven(const Stats&, const NameStack&, const string&) override {
             setMaxWrittenState(WrittenState::CONTEXT);
         }
 
         virtual void beginWhen(const NameStack& context,
                                const string& given,
-                               const NameStack& whenStack,
+                               const NameStack&,
                                const string& when) override {
             ++whenDepth_;
 
@@ -299,11 +299,11 @@ namespace Enhedron { namespace Test { namespace Impl { namespace Impl_Results {
             }
         }
 
-        virtual void endWhen(const Stats& stats,
-                             const NameStack& context,
-                             const string& given,
-                             const NameStack& whenStack,
-                             const string& when) override {
+        virtual void endWhen(const Stats&,
+                             const NameStack&,
+                             const string&,
+                             const NameStack&,
+                             const string&) override {
             --whenDepth_;
             whenWrittenDepth_ = min(whenDepth_, whenWrittenDepth_);
 
@@ -341,9 +341,9 @@ namespace Enhedron { namespace Test { namespace Impl { namespace Impl_Results {
             printVariables(variableList);
         }
 
-        virtual void pass(const NameStack& context,
-                          const string& given,
-                          const NameStack& whenStack,
+        virtual void pass(const NameStack&,
+                          const string&,
+                          const NameStack&,
                           optional <string> description,
                           const string &expressionText,
                           const vector <Variable> &variableList) override
@@ -370,9 +370,9 @@ namespace Enhedron { namespace Test { namespace Impl { namespace Impl_Results {
             }
         }
 
-        virtual void failByException(const NameStack& context,
-                                     const string& given,
-                                     const NameStack& whenStack,
+        virtual void failByException(const NameStack&,
+                                     const string&,
+                                     const NameStack&,
                                      const exception& e) override {
             indent(whenDepth());
             (*output_) << "TEST FAILED WITH EXCEPTION: " << e.what() << endl;

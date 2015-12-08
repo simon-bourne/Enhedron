@@ -4,7 +4,8 @@ project(Enhedron)
 include (CMakeLists.flags.txt)
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL Clang OR CMAKE_CXX_COMPILER_ID STREQUAL GNU)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wconversion")
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wconversion -Wextra -Wconversion -Wstrict-aliasing=1 -Wundef -Wpointer-arith -Wcast-align -Wwrite-strings -Wdate-time -Wenum-compare -Wredundant-decls")
 endif()
 
 include_directories(cpp/test/include cpp/lib/include)

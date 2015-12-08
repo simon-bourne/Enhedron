@@ -91,7 +91,7 @@ namespace Enhedron { namespace Assertion {
         }
 
         template<typename T = Value, std::enable_if_t< ! HasOutputOperator<T>::value>* = nullptr>
-        static std::string toString(const Value &value) {
+        static std::string toString(const Value&) {
             return "<unknown>";
         }
     };
@@ -136,7 +136,7 @@ namespace Enhedron { namespace Assertion {
 
     template<typename Value>
     struct Convert<Value, std::enable_if_t<std::is_function<std::remove_reference_t<Value>>::value>> {
-        static std::string toString(Value value) {
+        static std::string toString(Value) {
             return "<function>";
         }
     };
@@ -402,7 +402,7 @@ namespace Enhedron { namespace Assertion { namespace Impl { namespace Configurab
             (*parameters) << getParameterName(arg);
         }
 
-        void makeParameterNames(Out<ostringstream> parameters) const {}
+        void makeParameterNames(Out<ostringstream>) const {}
 
         template<typename Arg, IsExpression<Arg> = nullptr>
         string getParameterName(const Arg& arg) const {
@@ -435,7 +435,7 @@ namespace Enhedron { namespace Assertion { namespace Impl { namespace Configurab
             appendParameterVariableList(variableList, tailArgs...);
         }
 
-        void appendParameterVariableList(vector<Variable>& variableList) const {}
+        void appendParameterVariableList(vector<Variable>&) const {}
 
         template<typename Arg, IsExpression<Arg> = nullptr>
         void appendParameterVariable(vector<Variable>& variableList, const Arg& arg) const {

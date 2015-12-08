@@ -31,10 +31,17 @@ namespace Enhedron { namespace Impl { namespace Impl_Assertion {
 
         virtual bool notifyPassing() const override { return false; }
 
-        virtual void pass(optional<string> description, const string &expressionText, const vector <Variable> &variableList) override { }
+        virtual void pass(optional<string>, const string &, const vector <Variable> &) override { }
 
         virtual void fail(optional<string> description, const string &expressionText, const vector <Variable> &variableList) override {
-            cerr << "Assert failed: " << expressionText << "\n";
+            cerr << "Assert failed: ";
+
+            if (description) {
+                cerr << *description << " (" << expressionText << ")\n";
+            }
+            else {
+                cerr << expressionText << "\n";
+            }
 
             for (const auto &variable : variableList) {
                 cerr << "    " << variable.name() << " = " << variable.value() <<
@@ -49,16 +56,19 @@ namespace Enhedron { namespace Impl { namespace Impl_Assertion {
         }
     };
 
-    static CerrFailureHandler failureHandler;
+    inline Out<CerrFailureHandler> failureHandler() {
+        static CerrFailureHandler instance;
+        return out(instance);
+    }
 
     template<typename... Args>
     void Assert(Args&&... args) {
-        CheckWithFailureHandler(out(failureHandler), forward<Args>(args)...);
+        CheckWithFailureHandler(failureHandler(), forward<Args>(args)...);
     }
 
     template<typename Exception, typename... Args>
     void AssertThrows(Args&&... args) {
-        CheckThrowsWithFailureHandler<Exception>(out(failureHandler), forward<Args>(args)...);
+        CheckThrowsWithFailureHandler<Exception>(failureHandler(), forward<Args>(args)...);
     }
 }}}
 
