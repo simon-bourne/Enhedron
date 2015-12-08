@@ -883,5 +883,7 @@ namespace Enhedron { namespace Assertion {
     using Impl::Configurable::Function;
 }}
 
-#define M_ENHEDRON_VAL(expression) \
+#define M_ENHEDRON_VAR(expression) \
     (::Enhedron::Assertion::Impl::Configurable::makeVariable((#expression), (expression), (__FILE__), (__LINE__)))
+
+#define VAR M_ENHEDRON_VAR
