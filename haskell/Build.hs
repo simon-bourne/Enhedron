@@ -162,11 +162,11 @@ syncRules allModuleSrcFilePaths = do
 
         unit $ cmd "rsync" "-az" "--delete" excludeFlags ((moduleSrcDirPath </> ?sourceName) ++ "/") moduleDestDirPath
 
-cmake :: (?destName :: FilePath) => [FilePath] -> FilePath -> FilePath -> Action ()
+cmake :: [FilePath] -> FilePath -> FilePath -> Action ()
 cmake additionalDependencies srcRoot exeDir = do
     absoluteSrcRoot <- liftIO $ canonicalizePath srcRoot
 
-    need (cmakeListsFlagsDestFilePath : (srcRoot </> cmakeListsFile) : additionalDependencies)
+    need ((srcRoot </> cmakeListsFlagsFile) : (srcRoot </> cmakeListsFile) : additionalDependencies)
 
     mkDir exeDir
 
@@ -181,7 +181,7 @@ cmake additionalDependencies srcRoot exeDir = do
         cxxCompiler "clang-3.6/" = ("clang++-3.6", "clang-3.6")
         cxxCompiler name = error ("Unknown C++ compiler " ++ name)
 
-cppMultiIncludeExesRule :: (?destName :: FilePath, ?sourceName :: FilePath) => [FilePath] -> [FilePath] -> Rules ()
+cppMultiIncludeExesRule :: [FilePath] -> [FilePath] -> Rules ()
 cppMultiIncludeExesRule allCppSrcFilePaths singleHeaderIncludes = do
     let multiIncludeDestDirPath = destDirPath </> "exe/*/*" </> multiIncludeDestDir
     let allMultiIncludeDestFiles = (multiIncludeDestDirPath </> ) <$> [testHarnessExeFile, integrationTestExeFile]
