@@ -58,9 +58,9 @@ namespace Enhedron { namespace Log { namespace Impl { namespace Logger {
 
     template<typename Writer, typename... Args>
     void writeLogLine(Out<Writer> writer, Level level, EntryType entryType, const char* context, Args&&... args) {
-        auto line(writer->write(level, entryType, context, forward<Args>(args)...));
-
         if (Global::enabled(level)) {
+            auto line(writer->write(level, entryType, context, forward<Args>(args)...));
+
             auto lock(Global::lock());
             cout << line;
             cout.flush();
