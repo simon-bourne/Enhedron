@@ -67,7 +67,7 @@ namespace Enhedron { namespace Impl { namespace Util {
     }
 
     template<typename... Value>
-    void unused(Value& ...) { }
+    void unused(const Value& ...) { }
 
     class Finally final: public NoCopy {
         // std::function requires the functor to be copyable (because it's copyable).

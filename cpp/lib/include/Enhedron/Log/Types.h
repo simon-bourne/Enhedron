@@ -50,7 +50,7 @@ namespace Enhedron { namespace Log { namespace Impl { namespace Types {
             case Id::INFO:
                 return "Info";
             case Id::VERBOSE:
-                return "";
+                return "Verbose";
             case Id::TRACE:
                 return "Trace";
             }
