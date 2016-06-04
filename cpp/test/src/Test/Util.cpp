@@ -8,7 +8,7 @@
 #include "Enhedron/Test.h"
 #include "Enhedron/Util/Enum.h"
 #include "Enhedron/Util/Json.h"
-#include "Enhedron/Util/Math.h"
+#include "Enhedron/Math.h"
 #include "Enhedron/Util/Lazy.h"
 
 #include <string>
@@ -21,6 +21,7 @@ namespace Enhedron {
 
     using namespace Test;
     using namespace Util;
+    using namespace Math;
 
     static constexpr const char helloWorld[] = "Hello World!";
 

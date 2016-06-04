@@ -1,9 +1,16 @@
 containers:
+  ubuntu-xenial-core:
+    setup:
+    - !Ubuntu xenial
+  ubuntu-xenial-universe:
+    setup:
+    - !Container ubuntu-xenial-core
+    - !UbuntuUniverse
   build:
     setup:
-    - !UbuntuRelease { version: 15.10 }
+    - !Container ubuntu-xenial-universe
     - !UbuntuUniverse
-    - !Install [ ca-certificates, make, cmake, clang, gcc, g++, libboost-all-dev, gdbserver,
+    - !Install [ ca-certificates, make, cmake, clang-3.6, gcc, g++, libboost-all-dev, gdbserver,
                  ruby, libicu-dev, python-pip,
                  haskell-platform, rsync, texlive-latex-extra, texlive-fonts-recommended ]
     - !BuildDeps [ ruby-dev, zlib1g-dev ]
@@ -12,6 +19,8 @@ containers:
     - !Sh |
         cabal update
         cabal install filemanip megaparsec shake text
+        pip install --upgrade pip
+        pip install -U setuptools
         pip install sphinx sphinx-autobuild
         pip install sphinx_rtd_theme
         gem install copyright-header

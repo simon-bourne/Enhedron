@@ -8,6 +8,7 @@ import Data.Text (Text, lines, unlines, pack, unpack)
 import qualified Data.Text as Text (concat)
 import Data.Text.IO (readFile, writeFile, appendFile)
 import Text.Megaparsec
+import Text.Megaparsec.Text (Parser)
 import qualified Text.Megaparsec.Lexer as Lexer
 import Data.Either (isLeft, lefts, rights)
 import Control.Monad (void, filterM)
@@ -15,7 +16,7 @@ import Data.List (isInfixOf)
 import Development.Shake.FilePath ((</>))
 import System.Directory (doesFileExist)
 
-type Lexer = Parsec Text
+type Lexer = Parser
 
 symbol :: String -> Lexer ()
 symbol name = void $ Lexer.symbol whiteSpace name
@@ -32,7 +33,7 @@ skipBlockComment = Lexer.skipBlockComment "/*" "*/"
 notPragmaOnce :: Text -> Bool
 notPragmaOnce = isLeft . runParser pragmaOnce "C++ Header"
   where
-    pragmaOnce :: Parsec Text ()
+    pragmaOnce :: Parser ()
     pragmaOnce = do
         whiteSpace
         symbol "#"
@@ -42,12 +43,12 @@ notPragmaOnce = isLeft . runParser pragmaOnce "C++ Header"
 parseInclude :: Text -> Either Text Text
 parseInclude input = either (const $ Left input) Right $ runParser include "C++ Header" input
   where
-    include :: Parsec Text Text
+    include :: Parser Text
     include = do
         whiteSpace
         symbol "#"
         symbol "include"
-        between quote quote (pack <$> many (noneOf "\""))
+        between quote quote (pack <$> many (noneOf ("\"" :: String)))
     quote = char '\"'
 
 findHeader :: [FilePath] -> FilePath -> IO FilePath

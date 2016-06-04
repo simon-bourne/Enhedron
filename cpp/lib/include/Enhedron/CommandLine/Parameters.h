@@ -10,7 +10,7 @@
 #include "Enhedron/Util.h"
 #include "Enhedron/Util/MetaProgramming.h"
 #include "Enhedron/Util/Optional.h"
-#include "Enhedron/Util/Math.h"
+#include "Enhedron/Math.h"
 
 #include <string>
 #include <ostream>
@@ -29,7 +29,8 @@ namespace Enhedron { namespace CommandLine { namespace Impl { namespace Impl_Par
     using Util::bindFirst;
     using Util::optional;
     using Util::mapParameterPack;
-    using Util::makeDivisibleByRoundingUp;
+
+    using Math::makeDivisibleByRoundingUp;
 
     using std::string;
     using std::ostream;
