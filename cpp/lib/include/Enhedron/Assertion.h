@@ -14,6 +14,7 @@
 #include <string>
 #include <iostream>
 #include <utility>
+#include <stdexcept>
 
 namespace Enhedron { namespace Impl { namespace Impl_Assertion {
     using ::Enhedron::Util::optional;
@@ -23,6 +24,7 @@ namespace Enhedron { namespace Impl { namespace Impl_Assertion {
     using std::vector;
     using std::string;
     using std::cerr;
+    using std::runtime_error;
 
     using namespace ::Enhedron::Assertion;
 
@@ -70,8 +72,19 @@ namespace Enhedron { namespace Impl { namespace Impl_Assertion {
     void AssertThrows(Args&&... args) {
         CheckThrowsWithFailureHandler<Exception>(failureHandler(), forward<Args>(args)...);
     }
+
+    // Always throws an exception or aborts
+    template<typename... Args>
+    [[ noreturn ]]
+    void AssertUnreachable(Args&&... args) {
+        processFailure(failureHandler(), string("unreachableViolation"), forward<Args>(args)...);
+
+        throw runtime_error("unreachableViolation");
+    }
 }}}
 
 namespace Enhedron {
     using Impl::Impl_Assertion::Assert;
+    using Impl::Impl_Assertion::AssertThrows;
+    using Impl::Impl_Assertion::AssertUnreachable;
 }
