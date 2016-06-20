@@ -40,19 +40,21 @@ namespace Enhedron { namespace Impl { namespace Util {
     template<typename ValueType>
     class Out final {
     public:
+        constexpr Out(const Out<ValueType>&) = default;
+
         template<typename Super>
-        Out(Out<Super> value) : value(value.value) { }
+        constexpr Out(Out<Super> value) : value(value.value) { }
 
-        explicit Out(ValueType& value) : value(&value) { }
+        constexpr explicit Out(ValueType& value) : value(&value) { }
 
-        ValueType& get() { return *value; }
-        const ValueType& get() const { return *value; }
+        constexpr ValueType& get() { return *value; }
+        constexpr const ValueType& get() const { return *value; }
 
-        ValueType& operator*() { return *value; }
-        const ValueType& operator*() const { return *value; }
+        constexpr ValueType& operator*() { return *value; }
+        constexpr const ValueType& operator*() const { return *value; }
 
-        ValueType* operator->() { return value; }
-        const ValueType* operator->() const { return value; }
+        constexpr ValueType* operator->() { return value; }
+        constexpr const ValueType* operator->() const { return value; }
 
     private:
         template<typename Super>
