@@ -34,7 +34,7 @@ namespace Enhedron { namespace CommandLine {
 
     template<>
     inline std::string fromString<std::string>(std::string s) {
-	return move(s);
+	return s;
     }
 
     template<>
