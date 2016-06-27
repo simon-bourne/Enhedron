@@ -24,6 +24,59 @@
 #include <iostream>
 #include <sstream>
 #include <iterator>
+#include <type_traits>
+
+namespace Enhedron { namespace CommandLine {
+    template<typename Value>
+    inline Value fromString(std::string) {
+	static_assert(sizeof(Value) == 0, "No specialization found for toString");
+    }
+
+    template<>
+    inline std::string fromString<std::string>(std::string s) {
+	return move(s);
+    }
+
+    template<>
+    inline int fromString<int>(std::string s) {
+	return std::stoi(move(s));
+    }
+
+    template<>
+    inline long fromString<long>(std::string s) {
+	return std::stol(move(s));
+    }
+
+    template<>
+    inline long long fromString<long long>(std::string s) {
+	return std::stoll(move(s));
+    }
+
+    template<>
+    inline unsigned long fromString<unsigned long>(std::string s) {
+	return std::stoul(move(s));
+    }
+
+    template<>
+    inline unsigned long long fromString<unsigned long long>(std::string s) {
+	return std::stoull(move(s));
+    }
+
+    template<>
+    inline float fromString<float>(std::string s) {
+	return std::stof(move(s));
+    }
+
+    template<>
+    inline double fromString<double>(std::string s) {
+	return std::stod(move(s));
+    }
+
+    template<>
+    inline long double fromString<long double>(std::string s) {
+	return std::stold(move(s));
+    }
+}}
 
 namespace Enhedron { namespace CommandLine { namespace Impl { namespace Impl_Parameters {
     using Util::bindFirst;
@@ -53,6 +106,8 @@ namespace Enhedron { namespace CommandLine { namespace Impl { namespace Impl_Par
     using std::fill_n;
     using std::ostream_iterator;
     using std::copy;
+    using std::is_same;
+    using std::enable_if_t;
 
     enum class ExitStatus {
         OK,
@@ -177,13 +232,13 @@ namespace Enhedron { namespace CommandLine { namespace Impl { namespace Impl_Par
     class Option final {
         Name name_;
         string valueName_;
-        optional<string> defaultValue_;
+        optional<ValueType> defaultValue_;
     public:
         using Value = ValueType;
 
         Option(Name name, string valueName) : name_(move(name)), valueName_(move(valueName)) {}
 
-        Option(Name name, string valueName, string defaultValue) :
+        Option(Name name, string valueName, Value defaultValue) :
                 name_(move(name)), valueName_(move(valueName)), defaultValue_(move(defaultValue)) {}
 
         template<typename Functor>
@@ -209,7 +264,7 @@ namespace Enhedron { namespace CommandLine { namespace Impl { namespace Impl_Par
             name_.showDescription(output, width, padding);
         }
 
-        optional<string> defaultValue() const { return defaultValue_; }
+        optional<Value> defaultValue() const { return defaultValue_; }
     };
 
     class Flag final: public Name {
@@ -320,13 +375,21 @@ namespace Enhedron { namespace CommandLine { namespace Impl { namespace Impl_Par
             return functor(move(positionalArgs));
         }
 
-        template<typename Functor, typename... ParamTail>
+	template <typename T>
+        using isVector = is_same<T, vector< typename T::value_type, typename T::allocator_type > >;
+	
+        template<
+	    typename Functor,
+	    typename Value,
+	    typename... ParamTail,
+	    enable_if_t< ! isVector<Value>::value>* = nullptr
+	>
         ExitStatus runImpl(
                 map<string, vector<string>> optionValues,
                 vector<string> positionalArgs,
                 set<string> setFlags,
                 Functor&& functor,
-                Option<string>&& param,
+                Option<Value>&& param,
                 ParamTail&&... paramTail
         )
         {
@@ -337,7 +400,7 @@ namespace Enhedron { namespace CommandLine { namespace Impl { namespace Impl_Par
                 paramValues.insert(paramValues.end(), newValues.begin(), newValues.end());
             });
 
-            string value;
+            Value value;
 
             if (paramValues.empty()) {
                 if (param.defaultValue()) {
@@ -350,7 +413,7 @@ namespace Enhedron { namespace CommandLine { namespace Impl { namespace Impl_Par
                 }
             }
             else {
-                value = paramValues.front();
+                value = fromString<Value>(move(paramValues.front()));
             }
 
             if (paramValues.size() > 1) {
