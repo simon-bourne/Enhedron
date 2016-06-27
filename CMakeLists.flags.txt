@@ -5,7 +5,7 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL Clang)
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL GNU)
     # GCC
     # gcc 4.9 has no flag -fno-sanitize-recover
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall -Werror -pedantic -fsanitize=address -fno-sanitize-recover")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall -Werror -pedantic -fsanitize=address")
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL Intel)
     # using Intel C++
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL MSVC)
