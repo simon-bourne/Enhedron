@@ -7,6 +7,9 @@
 
 #pragma once
 
+#include "Enhedron/Util.h"
+
+#include <functional>
 #include <type_traits>
 #include <tuple>
 #include <utility>
