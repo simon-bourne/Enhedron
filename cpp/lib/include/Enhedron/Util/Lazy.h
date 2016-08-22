@@ -7,32 +7,58 @@
 
 #pragma once
 
-#include <utility>
 #include <functional>
+#include <utility>
 
-namespace Enhedron { namespace Util { namespace Impl { namespace Impl_Lazy {
-    using std::move;
-    using std::function;
+namespace Enhedron
+{
+namespace Util
+{
+namespace Impl
+{
+namespace Impl_Lazy
+{
+using std::move;
+using std::function;
 
-    template<typename Value>
-    class Lazy {
-        optional<Value> value_;
-        function<Value ()> eval_;
-    public:
-        template<typename Functor>
-        Lazy(Functor eval) : eval_(move(eval)) {}
+template <typename Value>
+class Lazy
+{
+    optional<Value> value_;
+    function<Value()> eval_;
 
-        const Value& get() {
-            if ( ! value_) value_ = eval_();
-            return *value_;
-        }
+public:
+    template <typename Functor>
+    Lazy(Functor eval) : eval_(move(eval))
+    {
+    }
 
-        const Value& operator*() { return get(); }
+    const Value& get()
+    {
+        if (!value_)
+            value_ = eval_();
+        return *value_;
+    }
 
-        const Value* operator->() { return &(get()); }
-    };
-}}}}
+    const Value& operator*()
+    {
+        return get();
+    }
 
-namespace Enhedron { namespace Util {
-    using Impl::Impl_Lazy::Lazy;
-}}
+    const Value* operator->()
+    {
+        return &(get());
+    }
+};
+}
+}
+}
+}
+
+namespace Enhedron
+{
+namespace Util
+{
+using Impl::Impl_Lazy::Lazy;
+}
+}

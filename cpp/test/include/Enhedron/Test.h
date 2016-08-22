@@ -5,6 +5,6 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#include "Enhedron/Test/Suite.h"
-#include "Enhedron/Test/Harness.h"
 #include "Enhedron/Assertion/Functions.h"
+#include "Enhedron/Test/Harness.h"
+#include "Enhedron/Test/Suite.h"
