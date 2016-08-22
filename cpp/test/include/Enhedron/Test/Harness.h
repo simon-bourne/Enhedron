@@ -51,24 +51,15 @@ inline Verbosity parseVerbosity(string v)
         return tolower(c, locale());
     });
 
-    if (v == "silent")
-        return Verbosity::SILENT;
-    if (v == "summary")
-        return Verbosity::SUMMARY;
-    if (v == "contexts")
-        return Verbosity::CONTEXTS;
-    if (v == "fixtures")
-        return Verbosity::FIXTURES;
-    if (v == "sections")
-        return Verbosity::SECTIONS;
-    if (v == "exhaustive_sections")
-        return Verbosity::EXHAUSTIVE_SECTIONS;
-    if (v == "checks")
-        return Verbosity::CHECKS;
-    if (v == "checks_expression")
-        return Verbosity::CHECKS_EXPRESSION;
-    if (v == "variables")
-        return Verbosity::VARIABLES;
+    if (v == "silent") return Verbosity::SILENT;
+    if (v == "summary") return Verbosity::SUMMARY;
+    if (v == "contexts") return Verbosity::CONTEXTS;
+    if (v == "fixtures") return Verbosity::FIXTURES;
+    if (v == "sections") return Verbosity::SECTIONS;
+    if (v == "exhaustive_sections") return Verbosity::EXHAUSTIVE_SECTIONS;
+    if (v == "checks") return Verbosity::CHECKS;
+    if (v == "checks_expression") return Verbosity::CHECKS_EXPRESSION;
+    if (v == "variables") return Verbosity::VARIABLES;
 
     throw runtime_error("Unknown verbosity \"" + v + "\"");
 }
@@ -78,25 +69,21 @@ runTests(bool listOnly, string verbosityString, vector<string> pathList)
 {
     vector<shared_ptr<vector<regex>>> pathRegexs;
 
-    for (auto& path : pathList)
-    {
+    for (auto& path : pathList) {
         vector<regex> pathComponentList;
         auto separatorPos = path.begin();
         auto matchChars = "/\\";
         auto matchCharsEnd = matchChars + 2;
         auto pathEnd = path.end();
 
-        while (true)
-        {
+        while (true) {
             auto end =
                 find_first_of(separatorPos, pathEnd, matchChars, matchCharsEnd);
 
-            while (end != pathEnd && end + 1 != pathEnd && *end == '\\')
-            {
+            while (end != pathEnd && end + 1 != pathEnd && *end == '\\') {
                 ++end;
 
-                if (*end == '/')
-                {
+                if (*end == '/') {
                     copy(end, pathEnd, end - 1);
                 }
                 else
@@ -107,13 +94,11 @@ runTests(bool listOnly, string verbosityString, vector<string> pathList)
                 end = find_first_of(end, pathEnd, matchChars, matchCharsEnd);
             }
 
-            if (separatorPos != end)
-            {
+            if (separatorPos != end) {
                 pathComponentList.emplace_back(separatorPos, end);
             }
 
-            if (end == pathEnd)
-            {
+            if (end == pathEnd) {
                 break;
             }
 
@@ -127,14 +112,12 @@ runTests(bool listOnly, string verbosityString, vector<string> pathList)
 
     Verbosity verbosity = parseVerbosity(verbosityString);
 
-    if (listOnly)
-    {
+    if (listOnly) {
         Test::list(pathRegexs, verbosity);
     }
     else
     {
-        if (!Test::run(pathRegexs, verbosity))
-        {
+        if (!Test::run(pathRegexs, verbosity)) {
             return ExitStatus::SOFTWARE;
         }
     }

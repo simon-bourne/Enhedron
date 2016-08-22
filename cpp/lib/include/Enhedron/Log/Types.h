@@ -46,11 +46,7 @@ public:
 
     Level() = delete;
 
-    Id getId() const
-    {
-        return id;
-    }
-
+    Id getId() const { return id; }
     const char* getName() const
     {
         switch (id)
@@ -74,42 +70,17 @@ public:
         return "Unknwon";
     }
 
-    static Level none()
-    {
-        return Level(Id::NONE);
-    }
-
-    static Level error()
-    {
-        return Level(Id::ERROR);
-    }
-
-    static Level warn()
-    {
-        return Level(Id::WARN);
-    }
-
-    static Level info()
-    {
-        return Level(Id::INFO);
-    }
-
-    static Level verbose()
-    {
-        return Level(Id::VERBOSE);
-    }
-
-    static Level trace()
-    {
-        return Level(Id::TRACE);
-    }
-
+    static Level none() { return Level(Id::NONE); }
+    static Level error() { return Level(Id::ERROR); }
+    static Level warn() { return Level(Id::WARN); }
+    static Level info() { return Level(Id::INFO); }
+    static Level verbose() { return Level(Id::VERBOSE); }
+    static Level trace() { return Level(Id::TRACE); }
     static string getNameHelp()
     {
         const auto& levelList = getLevelList();
 
-        if (levelList.empty())
-        {
+        if (levelList.empty()) {
             return "";
         }
 
@@ -133,13 +104,11 @@ public:
 
         const auto& levelList = getLevelList();
 
-        for (const auto& level : levelList)
-        {
+        for (const auto& level : levelList) {
             string compareString = level.getName();
             toLowerInPlace(out(compareString));
 
-            if (compareString == nameLower)
-            {
+            if (compareString == nameLower) {
                 return level;
             }
         }
@@ -154,10 +123,7 @@ private:
             return tolower(c, locale());
         });
     }
-    Level(Id id) : id(id)
-    {
-    }
-
+    Level(Id id) : id(id) {}
     static const vector<Level>& getLevelList()
     {
         static vector<Level> levelList{
@@ -178,13 +144,11 @@ enum class EntryType
 
 inline const char* logEntryTypeToString(EntryType type)
 {
-    if (type == EntryType::Log)
-    {
+    if (type == EntryType::Log) {
         return "log";
     }
 
-    if (type == EntryType::Begin)
-    {
+    if (type == EntryType::Begin) {
         return "begin";
     }
 

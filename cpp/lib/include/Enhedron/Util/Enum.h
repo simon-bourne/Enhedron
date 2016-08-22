@@ -65,27 +65,11 @@ class TaggedValue final
     Value value;
 
 public:
-    TaggedValue(Value value) : value(move(value))
-    {
-    }
-
-    Value& operator*()
-    {
-        return value;
-    }
-    const Value& operator*() const
-    {
-        return value;
-    }
-
-    Value* operator->()
-    {
-        return &value;
-    }
-    const Value* operator->() const
-    {
-        return &value;
-    }
+    TaggedValue(Value value) : value(move(value)) {}
+    Value& operator*() { return value; }
+    const Value& operator*() const { return value; }
+    Value* operator->() { return &value; }
+    const Value* operator->() const { return &value; }
 };
 }
 }

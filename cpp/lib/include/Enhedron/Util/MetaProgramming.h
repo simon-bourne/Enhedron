@@ -166,10 +166,7 @@ class StoreArgs final : public NoCopy
 public:
     // RValue reference arguments will be moved into this container. Everything
     // else will be copied.
-    StoreArgs(Args&&... args) : args(forward<Args>(args)...)
-    {
-    }
-
+    StoreArgs(Args&&... args) : args(forward<Args>(args)...) {}
     template <typename Functor>
     auto apply(Functor&& functor)
     {

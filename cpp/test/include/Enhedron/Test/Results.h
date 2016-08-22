@@ -58,48 +58,16 @@ public:
         return *this;
     }
 
-    void addFixture()
-    {
-        ++fixtures_;
-    }
-    void addTest()
-    {
-        ++tests_;
-    }
-    void addCheck()
-    {
-        ++checks_;
-    }
-
-    void failTest()
-    {
-        ++failedTests_;
-    }
-    void failCheck()
-    {
-        ++failedChecks_;
-    }
-
-    uint64_t fixtures() const
-    {
-        return fixtures_;
-    }
-    uint64_t tests() const
-    {
-        return tests_;
-    }
-    uint64_t checks() const
-    {
-        return checks_;
-    }
-    uint64_t failedTests() const
-    {
-        return failedTests_;
-    }
-    uint64_t failedChecks() const
-    {
-        return failedChecks_;
-    }
+    void addFixture() { ++fixtures_; }
+    void addTest() { ++tests_; }
+    void addCheck() { ++checks_; }
+    void failTest() { ++failedTests_; }
+    void failCheck() { ++failedChecks_; }
+    uint64_t fixtures() const { return fixtures_; }
+    uint64_t tests() const { return tests_; }
+    uint64_t checks() const { return checks_; }
+    uint64_t failedTests() const { return failedTests_; }
+    uint64_t failedChecks() const { return failedChecks_; }
 };
 
 // Wrapper, as we may add more functionality here. Such as tracking how much of
@@ -110,16 +78,8 @@ class NameStack final : public NoCopy
     vector<string> stack_;
 
 public:
-    const vector<string>& stack() const
-    {
-        return stack_;
-    }
-
-    void push(string name)
-    {
-        stack_.emplace_back(move(name));
-    }
-
+    const vector<string>& stack() const { return stack_; }
+    void push(string name) { stack_.emplace_back(move(name)); }
     void pop()
     {
         Assert(!VAR(stack_.empty()));
@@ -129,10 +89,7 @@ public:
 
 struct Results : public NoCopy
 {
-    virtual ~Results()
-    {
-    }
-
+    virtual ~Results() {}
     virtual void finish(const Stats& stats) = 0;
 
     virtual void
@@ -215,14 +172,12 @@ class HumanResults final : public Results
 
     void setMaxWrittenState(WrittenState maxState)
     {
-        if (writtenState_ > maxState)
-            writtenState_ = maxState;
+        if (writtenState_ > maxState) writtenState_ = maxState;
     }
 
     bool writeNeeded(WrittenState state)
     {
-        if (writtenState_ < state)
-        {
+        if (writtenState_ < state) {
             writtenState_ = state;
             return true;
         }
@@ -232,10 +187,8 @@ class HumanResults final : public Results
 
     void writeContext(const NameStack& contextStack)
     {
-        if (writeNeeded(WrittenState::CONTEXT))
-        {
-            if (!contextStack.stack().empty())
-            {
+        if (writeNeeded(WrittenState::CONTEXT)) {
+            if (!contextStack.stack().empty()) {
                 *output_ << contextStack.stack().front();
 
                 for (auto contextIter = contextStack.stack().begin() + 1;
@@ -254,8 +207,7 @@ class HumanResults final : public Results
     {
         writeContext(context);
 
-        if (writeNeeded(WrittenState::GIVEN))
-        {
+        if (writeNeeded(WrittenState::GIVEN)) {
             indent(1);
             *output_ << "Given: " << given << "\n";
         }
@@ -286,8 +238,7 @@ class HumanResults final : public Results
 
     void printVariables(const vector<Variable>& variableList)
     {
-        for (const auto& variable : variableList)
-        {
+        for (const auto& variable : variableList) {
             indent(whenDepth() + 2);
             (*output_) << variable.name() << " = " << variable.value()
                        << ": file \"" << variable.file() << "\", line "
@@ -297,8 +248,7 @@ class HumanResults final : public Results
 
     void indent(size_t indent)
     {
-        while (indent > 0)
-        {
+        while (indent > 0) {
             *output_ << "    ";
             --indent;
         }
@@ -319,18 +269,15 @@ public:
 
     virtual void finish(const Stats& stats) override
     {
-        if (verbosity_ >= Verbosity::SUMMARY)
-        {
+        if (verbosity_ >= Verbosity::SUMMARY) {
             bool failed = false;
 
-            if (stats.failedTests() > 0)
-            {
+            if (stats.failedTests() > 0) {
                 *output_ << "FAILED TESTS: " << stats.failedTests() << "\n";
                 failed = true;
             }
 
-            if (stats.failedChecks() > 0)
-            {
+            if (stats.failedChecks() > 0) {
                 *output_ << "FAILED CHECKS: " << stats.failedChecks() << "\n";
                 failed = true;
             }
@@ -339,8 +286,7 @@ public:
                      << stats.checks() << " checks, " << stats.fixtures()
                      << " fixtures\n";
 
-            if (failed)
-            {
+            if (failed) {
                 *output_ << "SOME TESTS FAILED!\n";
             }
         }
@@ -362,13 +308,11 @@ public:
     {
         setMaxWrittenState(WrittenState::GIVEN);
 
-        if (verbosity_ >= Verbosity::CONTEXTS)
-        {
+        if (verbosity_ >= Verbosity::CONTEXTS) {
             writeContext(context);
         }
 
-        if (verbosity_ >= Verbosity::FIXTURES)
-        {
+        if (verbosity_ >= Verbosity::FIXTURES) {
             writeGiven(context, given);
         }
     }
@@ -387,13 +331,11 @@ public:
     {
         ++whenDepth_;
 
-        if (verbosity_ >= Verbosity::FIXTURES)
-        {
+        if (verbosity_ >= Verbosity::FIXTURES) {
             writeGiven(context, given);
         }
 
-        if (verbosity_ >= Verbosity::SECTIONS)
-        {
+        if (verbosity_ >= Verbosity::SECTIONS) {
             indent(whenDepth());
             *output_ << "When : " << when << "\n";
             whenWrittenDepth_ = whenDepth_;
@@ -410,13 +352,11 @@ public:
         --whenDepth_;
         whenWrittenDepth_ = min(whenDepth_, whenWrittenDepth_);
 
-        if (whenDepth_ == 0 && verbosity_ >= Verbosity::CHECKS)
-        {
+        if (whenDepth_ == 0 && verbosity_ >= Verbosity::CHECKS) {
             *output_ << "\n";
         }
 
-        if (whenDepth_ == 0)
-        {
+        if (whenDepth_ == 0) {
             setMaxWrittenState(WrittenState::CONTEXT);
         }
         else
@@ -442,8 +382,7 @@ public:
         indent(whenDepth());
         (*output_) << "Then : ";
 
-        if (description)
-        {
+        if (description) {
             *output_ << *description << "\n";
             indent(whenDepth() + 1);
         }
@@ -463,15 +402,12 @@ public:
         indent(whenDepth());
         (*output_) << "Then : ";
 
-        if (description)
-        {
+        if (description) {
             (*output_) << *description << "\n";
         }
 
-        if (verbosity_ >= Verbosity::CHECKS_EXPRESSION || !description)
-        {
-            if (description)
-            {
+        if (verbosity_ >= Verbosity::CHECKS_EXPRESSION || !description) {
+            if (description) {
                 indent(whenDepth() + 1);
             }
 
@@ -480,8 +416,7 @@ public:
 
         (*output_) << "\n";
 
-        if (verbosity_ >= Verbosity::VARIABLES)
-        {
+        if (verbosity_ >= Verbosity::VARIABLES) {
             printVariables(variableList);
         }
     }

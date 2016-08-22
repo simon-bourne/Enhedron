@@ -51,15 +51,8 @@ private:
     optional<Failure> failure_;
 
 public:
-    virtual ~RecordFailures() override
-    {
-    }
-
-    virtual bool notifyPassing() const override
-    {
-        return false;
-    }
-
+    virtual ~RecordFailures() override {}
+    virtual bool notifyPassing() const override { return false; }
     virtual void
     pass(optional<string>, const string&, const vector<Variable>&) override
     {
@@ -70,18 +63,14 @@ public:
         const string& expressionText,
         const vector<Variable>& variableList) override
     {
-        if (failure_)
-        {
+        if (failure_) {
             throw runtime_error("Multiple failures");
         }
 
         failure_ = Failure{expressionText, variableList};
     }
 
-    const optional<Failure>& failure()
-    {
-        return failure_;
-    }
+    const optional<Failure>& failure() { return failure_; }
 };
 
 template <typename Exception,
@@ -116,11 +105,7 @@ public:
         return *this;
     }
 
-    bool moved() const
-    {
-        return moved_;
-    }
-
+    bool moved() const { return moved_; }
 private:
     bool moved_ = false;
 };
@@ -138,8 +123,7 @@ void expectFailure(
         CheckWithFailureHandler(out(recordFailures), move(expression));
         auto& failure = recordFailures.failure();
 
-        if (check(VAR(bool(failure))) && expressionText)
-        {
+        if (check(VAR(bool(failure))) && expressionText) {
             check(VAR(failure->expressionText) == expressionText);
         }
     }
@@ -155,8 +139,7 @@ void testBooleanOperator(Check& check, Value lhs, Value rhs)
     Operator op;
     bool result = op(lhs, rhs);
 
-    if (result)
-    {
+    if (result) {
         check(op(VAR(lhs), VAR(rhs)));
         check(op(lhs, VAR(rhs)));
         check(op(VAR(lhs), rhs));
@@ -192,10 +175,8 @@ void testOperator(Check& check, Value lhs, Value rhs)
 template <typename Operator>
 void testNumericOperator(Check& check)
 {
-    for (int i = -10; i < 10; ++i)
-    {
-        for (int j = -10; j < 10; ++j)
-        {
+    for (int i = -10; i < 10; ++i) {
+        for (int j = -10; j < 10; ++j) {
             testOperator<Operator>(check, i, j);
         }
     }
@@ -204,15 +185,12 @@ void testNumericOperator(Check& check)
 template <typename Operator>
 void testNonZeroDenominator(Check& check)
 {
-    for (int i = -10; i < 10; ++i)
-    {
-        for (int j = -10; j < -1; ++j)
-        {
+    for (int i = -10; i < 10; ++i) {
+        for (int j = -10; j < -1; ++j) {
             testOperator<Operator>(check, i, j);
         }
 
-        for (int j = 1; j < 10; ++j)
-        {
+        for (int j = 1; j < 10; ++j) {
             testOperator<Operator>(check, i, j);
         }
     }
@@ -231,8 +209,7 @@ void expectException(
         testAssertThrows<Exception>(out(recordFailures), move(expression));
         auto& failure = recordFailures.failure();
 
-        if (check(VAR(bool(failure))) && expressionText)
-        {
+        if (check(VAR(bool(failure))) && expressionText) {
             check(VAR(failure->expressionText) == expressionText);
         }
     }
@@ -242,21 +219,9 @@ void expectException(
     }
 }
 
-int sum3(int x, int y, int z)
-{
-    return x + y + z;
-}
-
-int overloaded(int x)
-{
-    return x;
-}
-
-double overloaded(double x)
-{
-    return x + 1.0;
-}
-
+int sum3(int x, int y, int z) { return x + y + z; }
+int overloaded(int x) { return x; }
+double overloaded(double x) { return x + 1.0; }
 template <typename... Args>
 auto overloadedProxy(Args&&... args)
 {
@@ -265,20 +230,9 @@ auto overloadedProxy(Args&&... args)
     })(forward<Args>(args)...);
 }
 
-int id(int x)
-{
-    return x;
-}
-
-bool equals0(int x)
-{
-    return x == 0;
-}
-bool equals1(int x)
-{
-    return x == 1;
-}
-
+int id(int x) { return x; }
+bool equals0(int x) { return x == 0; }
+bool equals1(int x) { return x == 1; }
 static Test::Suite s(
     "Assert",
     given(

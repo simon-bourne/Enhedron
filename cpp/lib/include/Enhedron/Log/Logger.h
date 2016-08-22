@@ -43,16 +43,8 @@ class Global : public NoCopy
 public:
     Global() = delete;
 
-    static void init(Level level)
-    {
-        getLevelId() = level.getId();
-    }
-
-    static bool enabled(Level level)
-    {
-        return getLevelId() >= level.getId();
-    }
-
+    static void init(Level level) { getLevelId() = level.getId(); }
+    static bool enabled(Level level) { return getLevelId() >= level.getId(); }
     static unique_lock<mutex> lock()
     {
         static mutex logMutex;
@@ -76,8 +68,7 @@ void writeLogLine(
     const char* context,
     Args&&... args)
 {
-    if (Global::enabled(level))
-    {
+    if (Global::enabled(level)) {
         auto line(
             writer->write(level, entryType, context, forward<Args>(args)...));
 
@@ -128,15 +119,10 @@ public:
         return *this;
     }
 
-    ~BlockLogger()
-    {
-        close();
-    }
-
+    ~BlockLogger() { close(); }
     void close()
     {
-        if (!closed)
-        {
+        if (!closed) {
             auto endTime = clock.now();
             auto elapsedSeconds =
                 duration_cast<duration<double>>(endTime - startTime);
@@ -164,10 +150,7 @@ template <typename Writer>
 class ConfigurableLogger final : public NoCopy
 {
 public:
-    ConfigurableLogger(const char* module) : writer(module)
-    {
-    }
-
+    ConfigurableLogger(const char* module) : writer(module) {}
     template <typename... Args>
     void error(const char* context, Args&&... args)
     {
@@ -244,8 +227,7 @@ public:
     template <typename... Args>
     void raiseIf(bool condition, const char* context, Args&&... args)
     {
-        if (condition)
-        {
+        if (condition) {
             raise(context, forward<Args>(args)...);
         }
     }

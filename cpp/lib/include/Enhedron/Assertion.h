@@ -35,15 +35,8 @@ using namespace ::Enhedron::Assertion;
 
 struct CerrFailureHandler final : FailureHandler
 {
-    virtual ~CerrFailureHandler() override
-    {
-    }
-
-    virtual bool notifyPassing() const override
-    {
-        return false;
-    }
-
+    virtual ~CerrFailureHandler() override {}
+    virtual bool notifyPassing() const override { return false; }
     virtual void
     pass(optional<string>, const string&, const vector<Variable>&) override
     {
@@ -56,8 +49,7 @@ struct CerrFailureHandler final : FailureHandler
     {
         cerr << "Assert failed: ";
 
-        if (description)
-        {
+        if (description) {
             cerr << *description << " (" << expressionText << ")\n";
         }
         else
@@ -65,8 +57,7 @@ struct CerrFailureHandler final : FailureHandler
             cerr << expressionText << "\n";
         }
 
-        for (const auto& variable : variableList)
-        {
+        for (const auto& variable : variableList) {
             cerr << "    " << variable.name() << " = " << variable.value()
                  << ": in file " << variable.file() << ", line "
                  << variable.line() << "\n";

@@ -124,8 +124,7 @@ static Test::Suite
           given(
               "makeDivisibleByRoundingDown",
               [](Check& check) {
-                  for (auto i = 1u; i < 10u; ++i)
-                  {
+                  for (auto i = 1u; i < 10u; ++i) {
                       check(VAR(makeDivisibleByRoundingDown(0u, i)) == 0u);
                   }
 
@@ -138,8 +137,7 @@ static Test::Suite
           given(
               "makeDivisibleByRoundingUp",
               [](Check& check) {
-                  for (auto i = 1u; i < 10u; ++i)
-                  {
+                  for (auto i = 1u; i < 10u; ++i) {
                       check(VAR(makeDivisibleByRoundingUp(0u, i)) == 0u);
                   }
 

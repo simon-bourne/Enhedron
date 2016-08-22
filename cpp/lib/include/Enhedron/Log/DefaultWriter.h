@@ -72,10 +72,7 @@ struct WriteValue<bool>
 template <>
 struct WriteValue<char>
 {
-    static void writeValue(std::ostream& out, char value)
-    {
-        out << int(value);
-    }
+    static void writeValue(std::ostream& out, char value) { out << int(value); }
 };
 
 template <>
@@ -141,10 +138,7 @@ struct WriteValue<
     Value,
     typename std::enable_if<std::is_arithmetic<Value>::value>::type>
 {
-    static void writeValue(std::ostream& out, Value value)
-    {
-        out << value;
-    }
+    static void writeValue(std::ostream& out, Value value) { out << value; }
 };
 }
 }
@@ -173,10 +167,7 @@ using Util::jsonEscape;
 class DefaultWriter final : public NoCopy
 {
 public:
-    DefaultWriter(const char* module) : module(jsonEscape(module))
-    {
-    }
-
+    DefaultWriter(const char* module) : module(jsonEscape(module)) {}
     /** @brief Write a log line.
      *
      * Thread safe
@@ -229,8 +220,7 @@ private:
         thread::id notThread;
         auto threadId = this_thread::get_id();
 
-        if (threadId == notThread)
-        {
+        if (threadId == notThread) {
             return "Main";
         }
 
@@ -255,11 +245,7 @@ private:
                   << setfill('0') << time.fractional_seconds();
     }
 
-    inline void writeComma(ostream& out)
-    {
-        out << ", ";
-    }
-
+    inline void writeComma(ostream& out) { out << ", "; }
     template <typename NAME, typename VALUE>
     inline void writeMember(ostream& out, const NAME& name, const VALUE& value)
     {
@@ -267,10 +253,7 @@ private:
         WriteValue<VALUE>::writeValue(out, value);
     }
 
-    void writeFields(ostream&)
-    {
-    }
-
+    void writeFields(ostream&) {}
     template <typename ValueType, typename... FieldList>
     void writeFields(
         ostream& out,
@@ -282,10 +265,7 @@ private:
         writeAdditionalFields(out, extraFields...);
     }
 
-    void writeAdditionalFields(ostream&)
-    {
-    }
-
+    void writeAdditionalFields(ostream&) {}
     template <typename ValueType, typename... FieldList>
     void writeAdditionalFields(
         ostream& out,

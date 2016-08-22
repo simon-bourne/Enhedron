@@ -76,15 +76,8 @@ class ContextResultsRecorder final : public NoCopy
     NameStack contextStack_;
 
 public:
-    ContextResultsRecorder(Out<Results> results) : results_(results)
-    {
-    }
-
-    const NameStack& contextStack() const
-    {
-        return contextStack_;
-    }
-
+    ContextResultsRecorder(Out<Results> results) : results_(results) {}
+    const NameStack& contextStack() const { return contextStack_; }
     void push(string name)
     {
         results_->beginContext(contextStack_, name);
@@ -132,11 +125,7 @@ public:
         results_->failByException(contextStack_, given, whenStack, e);
     }
 
-    virtual bool notifyPassing() const
-    {
-        return results_->notifyPassing();
-    }
-
+    virtual bool notifyPassing() const { return results_->notifyPassing(); }
     virtual void fail(
         const string& given,
         const NameStack& whenStack,
@@ -227,10 +216,7 @@ public:
 class Context : public NoCopy
 {
 public:
-    virtual ~Context()
-    {
-    }
-
+    virtual ~Context() {}
     virtual void list(
         const PathList& pathList,
         Out<ContextResultsRecorder> results,
@@ -255,8 +241,7 @@ public:
     {
         ContextResultsRecorder resultsRecorder(results);
 
-        for (const auto& context : instance().contextList)
-        {
+        for (const auto& context : instance().contextList) {
             context->list(pathList, out(resultsRecorder), 0);
         }
     }
@@ -267,8 +252,7 @@ public:
 
         ContextResultsRecorder resultsRecorder(results);
 
-        for (const auto& context : instance().contextList)
-        {
+        for (const auto& context : instance().contextList) {
             stats += context->run(pathList, out(resultsRecorder), 0);
         }
 
@@ -305,10 +289,8 @@ public:
         auto nextPathList = getMatchingPaths(pathList, depth);
         results->push(name);
 
-        if (nextPathList)
-        {
-            for (const auto& context : contextList)
-            {
+        if (nextPathList) {
+            for (const auto& context : contextList) {
                 context->list(*nextPathList, results, depth + 1);
             }
         }
@@ -326,10 +308,8 @@ public:
         auto nextPathList = getMatchingPaths(pathList, depth);
         results->push(name);
 
-        if (nextPathList)
-        {
-            for (const auto& context : contextList)
-            {
+        if (nextPathList) {
+            for (const auto& context : contextList) {
                 stats += context->run(*nextPathList, results, depth + 1);
             }
         }
@@ -343,19 +323,15 @@ private:
     optional<PathList>
     getMatchingPaths(const PathList& pathList, size_t depth) const
     {
-        if (pathList.empty())
-        {
+        if (pathList.empty()) {
             return pathList;
         }
 
         vector<shared_ptr<vector<regex>>> nextPathList;
 
-        for (const auto& path : pathList)
-        {
-            if (path->size() > depth)
-            {
-                if (regex_match(name, (*path)[depth]))
-                {
+        for (const auto& path : pathList) {
+            if (path->size() > depth) {
+                if (regex_match(name, (*path)[depth])) {
                     nextPathList.push_back(path);
                 }
             }
@@ -365,8 +341,7 @@ private:
             }
         }
 
-        if (nextPathList.empty())
-        {
+        if (nextPathList.empty()) {
             return none;
         }
 
@@ -387,10 +362,7 @@ void makeContextList(
     makeContextList(contextList, forward<ContextListType>(childContextList)...);
 }
 
-inline void makeContextList(Out<ContextList>)
-{
-}
-
+inline void makeContextList(Out<ContextList>) {}
 template <typename... ContextListType>
 unique_ptr<Context>
 context(const string& name, ContextListType&&... childContextList)
@@ -445,15 +417,13 @@ public:
     template <typename Functor>
     void when(string description, Functor&& functor)
     {
-        if (whenStack.size() <= whenDepth_)
-        {
+        if (whenStack.size() <= whenDepth_) {
             whenStack.push_back(StackElement{});
         }
 
         Finally stack([&] { ++whenStack[whenDepth_].current; });
 
-        if (whenStack[whenDepth_].index == whenStack[whenDepth_].current)
-        {
+        if (whenStack[whenDepth_].index == whenStack[whenDepth_].current) {
             ++whenDepth_;
             whenResultRecorder_.push(move(description));
 
@@ -490,10 +460,7 @@ public:
             description, expressionText, variableList);
     }
 
-    const Stats& stats() const
-    {
-        return stats_;
-    }
+    const Stats& stats() const { return stats_; }
 };
 
 class Check : public NoCopy
@@ -501,17 +468,12 @@ class Check : public NoCopy
     Out<WhenRunner> whenRunner_;
     Stats stats_;
 
-    friend inline Stats checkStats(const Check& check)
-    {
-        return check.stats_;
-    }
-
+    friend inline Stats checkStats(const Check& check) { return check.stats_; }
     bool addCheck(bool ok)
     {
         stats_.addCheck();
 
-        if (!ok)
-        {
+        if (!ok) {
             stats_.failCheck();
         }
 
@@ -519,10 +481,7 @@ class Check : public NoCopy
     }
 
 public:
-    Check(Out<WhenRunner> whenRunner) : whenRunner_(whenRunner)
-    {
-    }
-
+    Check(Out<WhenRunner> whenRunner) : whenRunner_(whenRunner) {}
     template <typename Functor>
     void when(string description, Functor&& functor)
     {
@@ -562,8 +521,7 @@ void WhenRunner::run(Functor&& functor, Args&&... args)
 
     do
     {
-        for (auto& element : whenStack)
-        {
+        for (auto& element : whenStack) {
             element.current = 0;
         }
 
@@ -581,21 +539,18 @@ void WhenRunner::run(Functor&& functor, Args&&... args)
 
         stats_.addTest(); // TODO
 
-        while (!whenStack.empty() && topWhenDone())
-        {
+        while (!whenStack.empty() && topWhenDone()) {
             whenStack.pop_back();
         }
 
-        if (!whenStack.empty())
-        {
+        if (!whenStack.empty()) {
             ++whenStack.back().index;
         }
 
         stats_ += checkStats(check);
     } while (!whenStack.empty());
 
-    if (stats_.tests() == 0)
-    {
+    if (stats_.tests() == 0) {
         stats_.addTest();
     }
 }
@@ -605,17 +560,13 @@ class Runner final : public Context
 {
     bool included(const PathList& pathList, size_t depth) const
     {
-        if (pathList.empty())
-        {
+        if (pathList.empty()) {
             return true;
         }
 
-        for (const auto& path : pathList)
-        {
-            if (path->size() > depth)
-            {
-                if (regex_match(name, (*path)[depth]))
-                {
+        for (const auto& path : pathList) {
+            if (path->size() > depth) {
+                if (regex_match(name, (*path)[depth])) {
                     return true;
                 }
             }
@@ -643,8 +594,7 @@ public:
         Out<ContextResultsRecorder> results,
         size_t depth) const override
     {
-        if (!included(pathList, depth))
-            return;
+        if (!included(pathList, depth)) return;
 
         results->beginGiven(name);
         Stats stats; // TODO
@@ -661,8 +611,7 @@ public:
         results->beginGiven(name);
         Stats stats;
 
-        if (included(pathList, depth))
-        {
+        if (included(pathList, depth)) {
             stats += args.applyExtraBefore(runTest, name, results);
         }
 
@@ -678,20 +627,10 @@ class RunTest final : public NoCopy
     Functor runTest;
 
 public:
-    RunTest(Functor runTest) : runTest(move(runTest))
-    {
-    }
-
+    RunTest(Functor runTest) : runTest(move(runTest)) {}
     // Visual C++ 2015 seems to generate a dodgy move constructor here.
-    RunTest(RunTest&& other) : runTest(move(other.runTest))
-    {
-    }
-
-    RunTest operator=(RunTest&& other)
-    {
-        runTest = move(other.runTest);
-    }
-
+    RunTest(RunTest&& other) : runTest(move(other.runTest)) {}
+    RunTest operator=(RunTest&& other) { runTest = move(other.runTest); }
     Stats operator()(
         const string& name,
         Out<ContextResultsRecorder> results,
@@ -723,10 +662,7 @@ struct Forward
 template <typename T>
 struct Forward<T*>
 {
-    static T* run(T* t)
-    {
-        return t;
-    }
+    static T* run(T* t) { return t; }
 };
 
 template <typename Functor, typename... Args>
@@ -768,8 +704,7 @@ class RunExhaustive final : public NoCopy
     {
         Stats stats;
 
-        for (const auto& value : container)
-        {
+        for (const auto& value : container) {
             stats += exhaustive(
                 [&](Check& check, auto&&... args) {
                     functor(check, value, args...);
@@ -814,10 +749,7 @@ class Exhaustive final : public NoCopy
     StoreArgs<Args...> args;
 
 public:
-    Exhaustive(Args&&... args) : args(forward<Args>(args)...)
-    {
-    }
-
+    Exhaustive(Args&&... args) : args(forward<Args>(args)...) {}
     template <typename Functor>
     unique_ptr<Context> given(string name, Functor runTest)
     {

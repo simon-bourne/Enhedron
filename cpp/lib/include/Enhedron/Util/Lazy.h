@@ -35,20 +35,12 @@ public:
 
     const Value& get()
     {
-        if (!value_)
-            value_ = eval_();
+        if (!value_) value_ = eval_();
         return *value_;
     }
 
-    const Value& operator*()
-    {
-        return get();
-    }
-
-    const Value* operator->()
-    {
-        return &(get());
-    }
+    const Value& operator*() { return get(); }
+    const Value* operator->() { return &(get()); }
 };
 }
 }

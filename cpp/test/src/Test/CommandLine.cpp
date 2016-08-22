@@ -182,8 +182,7 @@ static Test::Suite
                       5,
                       argv,
                       [&](const vector<string>& vectorOption, vector<string>) {
-                          if (check(VAR(vectorOption.size()) == 2u))
-                          {
+                          if (check(VAR(vectorOption.size()) == 2u)) {
                               check(VAR(vectorOption[0]) == "value0");
                               check(VAR(vectorOption[1]) == "value1");
                           }

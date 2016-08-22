@@ -31,8 +31,7 @@ inline string jsonEscape(const string& input)
     string escapedString;
     escapedString.reserve(input.size());
 
-    for (auto c : input)
-    {
+    for (auto c : input) {
         switch (c)
         {
             case '\"':
@@ -64,8 +63,7 @@ inline string jsonEscape(const string& input)
                 escapedString += 't';
                 break;
             default:
-                if (c < 0x20)
-                {
+                if (c < 0x20) {
                     ostringstream escapeCode;
                     escapeCode << "\\u" << setw(4) << setfill('0') << hex
                                << static_cast<unsigned int>(c);

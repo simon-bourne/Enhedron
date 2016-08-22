@@ -42,8 +42,7 @@ public:
 
     optional(const optional<Value>& other)
     {
-        if (bool(other))
-        {
+        if (bool(other)) {
             value_ = make_unique<Value>(*other.value_);
         }
         else
@@ -54,8 +53,7 @@ public:
 
     optional<Value>& operator=(const optional<Value>& other)
     {
-        if (bool(other))
-        {
+        if (bool(other)) {
             value_ = make_unique<Value>(*other.value_);
         }
         else
@@ -69,40 +67,16 @@ public:
     optional(optional<Value>&&) = default;
     optional& operator=(optional<Value>&&) = default;
 
-    optional(const Value& value) : value_(make_unique<Value>(value))
-    {
-    }
+    optional(const Value& value) : value_(make_unique<Value>(value)) {}
     optional(Value&& value) : value_(make_unique<Value>(forward<Value>(value)))
     {
     }
-    optional(None)
-    {
-    }
-
-    Value& get() const
-    {
-        return *value_;
-    }
-
-    Value& operator*() const
-    {
-        return *value_;
-    }
-
-    Value* operator->() const
-    {
-        return value_.get();
-    }
-
-    void reset()
-    {
-        value_.reset();
-    }
-
-    operator bool() const
-    {
-        return bool(value_);
-    }
+    optional(None) {}
+    Value& get() const { return *value_; }
+    Value& operator*() const { return *value_; }
+    Value* operator->() const { return value_.get(); }
+    void reset() { value_.reset(); }
+    operator bool() const { return bool(value_); }
 };
 
 template <typename Value>
@@ -112,37 +86,13 @@ class optional<Value&> final
 
 public:
     optional() = default;
-    optional(Value& value) : value_(&value)
-    {
-    }
-    optional(None)
-    {
-    }
-
-    Value& get() const
-    {
-        return *value_;
-    }
-
-    Value& operator*() const
-    {
-        return *value_;
-    }
-
-    Value* operator->() const
-    {
-        return value_;
-    }
-
-    void reset()
-    {
-        value_ = nullptr;
-    }
-
-    operator bool() const
-    {
-        return value_ != nullptr;
-    }
+    optional(Value& value) : value_(&value) {}
+    optional(None) {}
+    Value& get() const { return *value_; }
+    Value& operator*() const { return *value_; }
+    Value* operator->() const { return value_; }
+    void reset() { value_ = nullptr; }
+    operator bool() const { return value_ != nullptr; }
 };
 }
 }

@@ -35,16 +35,9 @@ static Suite
           })));
 // Assertion example 1 end.
 
-void throwRuntimeError()
-{
-    throw runtime_error("Expected exception");
-}
-
+void throwRuntimeError() { throw runtime_error("Expected exception"); }
 // Multiply example begin.
-int multiply(int x, int y)
-{
-    return x * y;
-}
+int multiply(int x, int y) { return x * y; }
 // Multiply example end.
 
 // Assertion example 14:
@@ -281,8 +274,7 @@ static Suite
                       // This is our model to check multiply against.
                       int expected = 0;
 
-                      for (int i = 0; i < x; ++i)
-                      {
+                      for (int i = 0; i < x; ++i) {
                           expected += y;
                       }
 

@@ -157,9 +157,7 @@ class Name : public NoCopy
     optional<string> description_;
 
 public:
-    Name(string longName) : longName_("--" + longName)
-    {
-    }
+    Name(string longName) : longName_("--" + longName) {}
     Name(string longName, string description)
         : longName_("--" + longName), description_(move(description))
     {
@@ -182,8 +180,7 @@ public:
     template <typename Functor>
     void forEachName(Functor&& functor) const
     {
-        if (shortName_)
-        {
+        if (shortName_) {
             functor(*shortName_);
         }
 
@@ -192,10 +189,8 @@ public:
 
     bool anyMatch(const char* arg) const
     {
-        if (shortName_)
-        {
-            if (arg == *shortName_)
-            {
+        if (shortName_) {
+            if (arg == *shortName_) {
                 return true;
             }
         }
@@ -203,17 +198,12 @@ public:
         return arg == longName_;
     }
 
-    const string& longName() const
-    {
-        return longName_;
-    }
-
+    const string& longName() const { return longName_; }
     string makeNamesString() const
     {
         string result("  ");
 
-        if (shortName_)
-        {
+        if (shortName_) {
             result += *shortName_ + ", ";
         }
 
@@ -230,22 +220,18 @@ public:
     {
         width = max(width, static_cast<size_t>(10u));
 
-        if (description_)
-        {
+        if (description_) {
             auto current = description_->begin();
 
-            while (static_cast<size_t>(description_->end() - current) > width)
-            {
+            while (static_cast<size_t>(description_->end() - current) > width) {
                 auto currentEnd =
                     current + static_cast<string::difference_type>(width);
                 auto breakAt = currentEnd;
 
-                while (true)
-                {
+                while (true) {
                     --breakAt;
 
-                    if (breakAt == current)
-                    {
+                    if (breakAt == current) {
                         // We didn't find a space - hyphenate.
                         --currentEnd;
                         copy(
@@ -257,8 +243,7 @@ public:
                         break;
                     }
 
-                    if (*breakAt == ' ')
-                    {
+                    if (*breakAt == ' ') {
                         copy(current, breakAt, ostream_iterator<char>(*output));
                         current = breakAt;
 
@@ -269,8 +254,7 @@ public:
                 *output << "\n";
                 fill_n(ostream_iterator<char>(*output), padding, ' ');
 
-                while (*current == ' ')
-                {
+                while (*current == ' ') {
                     ++current;
                 }
             }
@@ -310,16 +294,8 @@ public:
         name_.forEachName(forward<Functor>(functor));
     }
 
-    bool anyMatch(const char* arg) const
-    {
-        return name_.anyMatch(arg);
-    }
-
-    const string& longName() const
-    {
-        return name_.longName();
-    }
-
+    bool anyMatch(const char* arg) const { return name_.anyMatch(arg); }
+    const string& longName() const { return name_.longName(); }
     string makeNamesString() const
     {
         return name_.makeNamesString() + " <" + valueName_ + ">";
@@ -336,10 +312,7 @@ public:
         name_.showDescription(output, width, padding);
     }
 
-    optional<Value> defaultValue() const
-    {
-        return defaultValue_;
-    }
+    optional<Value> defaultValue() const { return defaultValue_; }
 };
 
 class Flag final : public Name
@@ -381,15 +354,13 @@ class Arguments final : public NoCopy
     {
         *helpOut_ << "Usage: " << exeName << " [OPTION]...";
 
-        if (!positionalDescription_.empty())
-        {
+        if (!positionalDescription_.empty()) {
             *helpOut_ << " [" << positionalDescription_ << "]...";
         }
 
         *helpOut_ << "\n\n";
 
-        if (!description_.empty())
-        {
+        if (!description_.empty()) {
             *helpOut_ << description_ << "\n\n";
         }
 
@@ -416,8 +387,7 @@ class Arguments final : public NoCopy
                 bool descriptionOnNewline =
                     nameString.size() + tabWidth > padding;
 
-                if (descriptionOnNewline)
-                {
+                if (descriptionOnNewline) {
                     *helpOut_ << "\n";
                 }
                 else
@@ -442,8 +412,7 @@ class Arguments final : public NoCopy
 
         *helpOut_ << "\n";
 
-        if (!notes_.empty())
-        {
+        if (!notes_.empty()) {
             *helpOut_ << notes_ << "\n\n";
         }
     }
@@ -484,10 +453,8 @@ class Arguments final : public NoCopy
 
         Value value;
 
-        if (paramValues.empty())
-        {
-            if (param.defaultValue())
-            {
+        if (paramValues.empty()) {
+            if (param.defaultValue()) {
                 value = *param.defaultValue();
             }
             else
@@ -502,8 +469,7 @@ class Arguments final : public NoCopy
             value = fromString<Value>(move(paramValues.front()));
         }
 
-        if (paramValues.size() > 1)
-        {
+        if (paramValues.size() > 1) {
             *errorOut_ << "Error: Multiple values for " + param.longName()
                        << "\n";
 
@@ -597,10 +563,7 @@ class Arguments final : public NoCopy
         readNames(optionNames, allNames, paramsTail...);
     }
 
-    void readNames(Out<set<string>>, Out<set<string>>)
-    {
-    }
-
+    void readNames(Out<set<string>>, Out<set<string>>) {}
     template <typename ParamType, typename... ParamsTail>
     void readNames(
         Out<set<string>> optionNames,
@@ -609,8 +572,7 @@ class Arguments final : public NoCopy
         const ParamsTail&... paramsTail)
     {
         param.forEachName([&](const string& name) {
-            if (!allNames->emplace(name).second)
-            {
+            if (!allNames->emplace(name).second) {
                 throw logic_error("Duplicate name " + name);
             }
         });
@@ -627,8 +589,7 @@ class Arguments final : public NoCopy
 
     StandardArg checkArgs(int argc, const char* const argv[])
     {
-        if (argc <= 0)
-        {
+        if (argc <= 0) {
             throw runtime_error("argc is 0.");
         }
         else if (argv == nullptr)
@@ -637,21 +598,17 @@ class Arguments final : public NoCopy
         }
         else
         {
-            for (int index = 0; index < argc; ++index)
-            {
-                if (argv[index] == nullptr)
-                {
+            for (int index = 0; index < argc; ++index) {
+                if (argv[index] == nullptr) {
                     throw runtime_error("argv has null value.");
                 }
                 else
                 {
-                    if (helpFlag().anyMatch(argv[index]))
-                    {
+                    if (helpFlag().anyMatch(argv[index])) {
                         return StandardArg::HELP;
                     }
 
-                    if (versionFlag().anyMatch(argv[index]))
-                    {
+                    if (versionFlag().anyMatch(argv[index])) {
                         return StandardArg::VERSION;
                     }
                 }
@@ -670,14 +627,12 @@ class Arguments final : public NoCopy
     {
         auto standardArg = checkArgs(argc, argv);
 
-        if (standardArg == StandardArg::HELP)
-        {
+        if (standardArg == StandardArg::HELP) {
             displayHelp(argv[0], forward<Params>(params)...);
             return ExitStatus::OK;
         }
 
-        if (standardArg == StandardArg::VERSION)
-        {
+        if (standardArg == StandardArg::VERSION) {
             *helpOut_ << version_ << "\n";
             return ExitStatus::OK;
         }
@@ -690,33 +645,27 @@ class Arguments final : public NoCopy
         vector<string> positionalArgs;
         set<string> setFlags;
 
-        for (int index = 1; index < argc; ++index)
-        {
+        for (int index = 1; index < argc; ++index) {
             string currentArg(argv[index]);
 
-            if (currentArg == "--")
-            {
+            if (currentArg == "--") {
                 positionalArgs.insert(
                     positionalArgs.end(), argv + index, argv + argc);
                 break;
             }
 
-            if (!currentArg.empty() && currentArg[0] == '-')
-            {
-                if (allNames.count(currentArg) == 0)
-                {
+            if (!currentArg.empty() && currentArg[0] == '-') {
+                if (allNames.count(currentArg) == 0) {
                     *errorOut_ << "Error: Unknown option " << currentArg
                                << "\n";
 
                     return ExitStatus::USAGE;
                 }
 
-                if (optionNames.count(currentArg))
-                {
+                if (optionNames.count(currentArg)) {
                     ++index;
 
-                    if (index == argc)
-                    {
+                    if (index == argc) {
                         *errorOut_ << "Error: No value supplied for option "
                                    << currentArg << "\n";
 
@@ -746,8 +695,7 @@ class Arguments final : public NoCopy
 
     const char* exeName(int argc, const char* const argv[])
     {
-        if (argv && argc > 0 && argv[0])
-        {
+        if (argv && argc > 0 && argv[0]) {
             return argv[0];
         }
 
@@ -771,10 +719,7 @@ public:
     {
         description_ = move(description);
     }
-    void setNotes(string notes)
-    {
-        notes_ = move(notes);
-    }
+    void setNotes(string notes) { notes_ = move(notes); }
     void setPositionalDescription(string positionalDescription)
     {
         positionalDescription_ = move(positionalDescription);

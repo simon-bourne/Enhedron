@@ -215,10 +215,7 @@ struct Convert<
     Value,
     std::enable_if_t<std::is_function<std::remove_reference_t<Value>>::value>>
 {
-    static std::string toString(Value)
-    {
-        return "<function>";
-    }
+    static std::string toString(Value) { return "<function>"; }
 };
 
 template <typename Container>
@@ -229,10 +226,8 @@ struct Convert<Container, std::enable_if_t<IsStlContainer<Container>::value>>
         std::string result("[");
         bool isFirst = true;
 
-        for (const auto& element : value)
-        {
-            if (!isFirst)
-            {
+        for (const auto& element : value) {
+            if (!isFirst) {
                 result += ", ";
             }
 
@@ -314,26 +309,10 @@ public:
     {
     }
 
-    const string& name() const
-    {
-        return name_;
-    }
-
-    const string& value() const
-    {
-        return value_;
-    }
-
-    const string& file() const
-    {
-        return file_;
-    }
-
-    int line() const
-    {
-        return line_;
-    }
-
+    const string& name() const { return name_; }
+    const string& value() const { return value_; }
+    const string& file() const { return file_; }
+    int line() const { return line_; }
 private:
     string name_;
     string value_;
@@ -347,24 +326,10 @@ class Literal final : public Expression
 public:
     using ResultType = DecayArrayAndFunction_t<Value>;
 
-    explicit Literal(const Value& value) : value(value)
-    {
-    }
-
-    string makeName() const
-    {
-        return Convert<Value>::toString(value);
-    }
-
-    void appendVariables(vector<Variable>&) const
-    {
-    }
-
-    const Value& evaluate()
-    {
-        return value;
-    }
-
+    explicit Literal(const Value& value) : value(value) {}
+    string makeName() const { return Convert<Value>::toString(value); }
+    void appendVariables(vector<Variable>&) const {}
+    const Value& evaluate() { return value; }
 private:
     const Value& value;
 };
@@ -394,11 +359,7 @@ public:
         arg.appendVariables(variableList);
     }
 
-    ResultType evaluate()
-    {
-        return functor(arg.evaluate());
-    }
-
+    ResultType evaluate() { return functor(arg.evaluate()); }
 private:
     const char* operatorName;
     Functor functor;
@@ -439,11 +400,7 @@ public:
         rhs.appendVariables(variableList);
     }
 
-    ResultType evaluate()
-    {
-        return functor(lhs.evaluate(), rhs.evaluate());
-    }
-
+    ResultType evaluate() { return functor(lhs.evaluate(), rhs.evaluate()); }
 private:
     const char* operatorName;
     Functor functor;
@@ -504,8 +461,7 @@ public:
             args);
         valueString << ")";
 
-        if (exceptionMessage)
-        {
+        if (exceptionMessage) {
             valueString << " threw \"" << *exceptionMessage << "\"";
         }
 
@@ -514,8 +470,7 @@ public:
 
     void appendVariables(vector<Variable>& variableList) const
     {
-        if (fileAndLine)
-        {
+        if (fileAndLine) {
             variableList.emplace_back(
                 name, "function", fileAndLine->file, fileAndLine->line);
         }
@@ -560,10 +515,7 @@ private:
         (*parameters) << getParameterName(arg);
     }
 
-    void makeParameterNames(Out<ostringstream>) const
-    {
-    }
-
+    void makeParameterNames(Out<ostringstream>) const {}
     template <typename Arg, IsExpression<Arg> = nullptr>
     string getParameterName(const Arg& arg) const
     {
@@ -598,10 +550,7 @@ private:
         appendParameterVariableList(variableList, tailArgs...);
     }
 
-    void appendParameterVariableList(vector<Variable>&) const
-    {
-    }
-
+    void appendParameterVariableList(vector<Variable>&) const {}
     template <typename Arg, IsExpression<Arg> = nullptr>
     void appendParameterVariable(vector<Variable>& variableList, const Arg& arg)
         const
@@ -669,22 +618,14 @@ public:
     {
     }
 
-    string makeName() const
-    {
-        return variableName;
-    }
-
+    string makeName() const { return variableName; }
     void appendVariables(vector<Variable>& variableList) const
     {
         variableList.emplace_back(
             variableName, Convert<Value>::toString(value), file, line);
     }
 
-    ResultType evaluate()
-    {
-        return value;
-    }
-
+    ResultType evaluate() { return value; }
     template <typename... Args>
     auto operator()(Args&&... args)
     {
@@ -714,22 +655,14 @@ public:
     {
     }
 
-    string makeName() const
-    {
-        return variableName;
-    }
-
+    string makeName() const { return variableName; }
     void appendVariables(vector<Variable>& variableList) const
     {
         variableList.emplace_back(
             variableName, Convert<Value>::toString(value), file, line);
     }
 
-    ResultType evaluate()
-    {
-        return value;
-    }
-
+    ResultType evaluate() { return value; }
     // Only call this once! It will move the underlying value.
     template <typename... Args>
     FunctionValue<Value, Args...> operator()(Args&&... args)
@@ -1040,10 +973,7 @@ void addContextVariables(
     addContextVariables(variableList, contextVariableList...);
 }
 
-inline void addContextVariables(vector<Variable>&)
-{
-}
-
+inline void addContextVariables(vector<Variable>&) {}
 template <typename Expression, typename... ContextVariableList>
 vector<Variable> buildVariableList(
     const Expression& expression,
@@ -1076,8 +1006,7 @@ void processSuccess(
     Expression expression,
     ContextVariableList... contextVariableList)
 {
-    if (failureHandler->notifyPassing())
-    {
+    if (failureHandler->notifyPassing()) {
         failureHandler->pass(
             move(description),
             expression.makeName(),
@@ -1092,8 +1021,7 @@ bool CheckWithFailureHandlerImpl(
     Expression expression,
     Tail... tail)
 {
-    if (!static_cast<bool>(expression.evaluate()))
-    {
+    if (!static_cast<bool>(expression.evaluate())) {
         processFailure(
             failureHandler, move(description), move(expression), move(tail)...);
 

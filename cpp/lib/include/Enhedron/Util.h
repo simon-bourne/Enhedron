@@ -55,37 +55,13 @@ public:
     {
     }
 
-    constexpr explicit Out(ValueType& value) : value(&value)
-    {
-    }
-
-    ValueType& get()
-    {
-        return *value;
-    }
-    constexpr const ValueType& get() const
-    {
-        return *value;
-    }
-
-    ValueType& operator*()
-    {
-        return *value;
-    }
-    constexpr const ValueType& operator*() const
-    {
-        return *value;
-    }
-
-    ValueType* operator->()
-    {
-        return value;
-    }
-    constexpr const ValueType* operator->() const
-    {
-        return value;
-    }
-
+    constexpr explicit Out(ValueType& value) : value(&value) {}
+    ValueType& get() { return *value; }
+    constexpr const ValueType& get() const { return *value; }
+    ValueType& operator*() { return *value; }
+    constexpr const ValueType& operator*() const { return *value; }
+    ValueType* operator->() { return value; }
+    constexpr const ValueType* operator->() const { return value; }
 private:
     template <typename Super>
     friend class Out;
@@ -110,9 +86,7 @@ class Finally final : public NoCopy
     // copyable).
     struct BaseFunctor
     {
-        virtual ~BaseFunctor()
-        {
-        }
+        virtual ~BaseFunctor() {}
         virtual void operator()() = 0;
     };
 
@@ -122,16 +96,9 @@ class Finally final : public NoCopy
         Functor f;
 
     public:
-        DerivedFunctor(Functor f) : f(move(f))
-        {
-        }
-        virtual ~DerivedFunctor()
-        {
-        }
-        virtual void operator()() override
-        {
-            f();
-        }
+        DerivedFunctor(Functor f) : f(move(f)) {}
+        virtual ~DerivedFunctor() {}
+        virtual void operator()() override { f(); }
     };
 
     unique_ptr<BaseFunctor> functor;
@@ -159,15 +126,10 @@ public:
         return *this;
     }
 
-    ~Finally()
-    {
-        close();
-    }
-
+    ~Finally() { close(); }
     void close()
     {
-        if (valid)
-        {
+        if (valid) {
             (*functor)();
         }
 
