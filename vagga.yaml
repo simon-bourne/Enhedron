@@ -10,9 +10,12 @@ containers:
     setup:
     - !Container ubuntu-xenial-universe
     - !UbuntuUniverse
-    - !Install [ ca-certificates, make, cmake, clang-3.6, gcc, g++, libboost-all-dev, gdbserver,
+    - !Install [ ca-certificates, pkg-config,
+                 make, cmake,
+                 clang-3.6, gcc, g++, libboost-all-dev, gdbserver,
                  ruby, libicu-dev, python-pip,
-                 haskell-platform, rsync, texlive-latex-extra, texlive-fonts-recommended ]
+                 haskell-platform,
+                 rsync, texlive-latex-extra, texlive-fonts-recommended ]
     - !BuildDeps [ ruby-dev, zlib1g-dev ]
     - !Env
       HOME: /root # For cabal
