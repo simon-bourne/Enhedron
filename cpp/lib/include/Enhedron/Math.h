@@ -9,17 +9,14 @@
 
 #include <limits>
 
-namespace Enhedron
-{
-namespace Impl_Math
-{
+namespace Enhedron {
+namespace Impl_Math {
 using std::numeric_limits;
 
 // Assumes numerator + denominator + 1 doesn't overflow.
 template <typename NumeratorType, typename DenominatorType>
 constexpr NumeratorType
-divideRoundingUp(NumeratorType numerator, DenominatorType denominator)
-{
+divideRoundingUp(NumeratorType numerator, DenominatorType denominator) {
     // Doesn't work for -ve numbers.
     static_assert(
         !numeric_limits<NumeratorType>::is_signed,
@@ -39,8 +36,7 @@ divideRoundingUp(NumeratorType numerator, DenominatorType denominator)
 }
 
 template <typename Value, typename Modulus>
-constexpr Value makeDivisibleByRoundingDown(Value value, Modulus modulus)
-{
+constexpr Value makeDivisibleByRoundingDown(Value value, Modulus modulus) {
     // Doesn't work for -ve numbers.
     static_assert(!numeric_limits<Value>::is_signed, "Value must be unsigned");
     static_assert(
@@ -54,8 +50,7 @@ constexpr Value makeDivisibleByRoundingDown(Value value, Modulus modulus)
 }
 
 template <typename Value, typename Modulus>
-constexpr Value makeDivisibleByRoundingUp(Value value, Modulus modulus)
-{
+constexpr Value makeDivisibleByRoundingUp(Value value, Modulus modulus) {
     // Doesn't work for -ve numbers.
     static_assert(!numeric_limits<Value>::is_signed, "Value must be unsigned");
     static_assert(
@@ -70,8 +65,8 @@ constexpr Value makeDivisibleByRoundingUp(Value value, Modulus modulus)
 
 //! Is numerator divisible by denominator
 template <typename NumeratorType, typename DenominatorType>
-constexpr bool isDivisible(NumeratorType numerator, DenominatorType denominator)
-{
+constexpr bool
+isDivisible(NumeratorType numerator, DenominatorType denominator) {
     static_assert(
         numeric_limits<NumeratorType>::is_integer,
         "NumeratorType must be integer");
@@ -84,10 +79,8 @@ constexpr bool isDivisible(NumeratorType numerator, DenominatorType denominator)
 }
 }
 
-namespace Enhedron
-{
-namespace Math
-{
+namespace Enhedron {
+namespace Math {
 using Impl_Math::divideRoundingUp;
 using Impl_Math::makeDivisibleByRoundingDown;
 using Impl_Math::makeDivisibleByRoundingUp;

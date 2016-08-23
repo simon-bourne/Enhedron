@@ -27,14 +27,10 @@
 #include <utility>
 #include <vector>
 
-namespace Enhedron
-{
-namespace Test
-{
-namespace Impl
-{
-namespace Impl_Suite
-{
+namespace Enhedron {
+namespace Test {
+namespace Impl {
+namespace Impl_Suite {
 using namespace Assertion;
 
 using Util::TaggedValue;
@@ -70,58 +66,50 @@ using std::min;
 
 using PathList = vector<shared_ptr<vector<regex>>>;
 
-class ContextResultsRecorder final : public NoCopy
-{
+class ContextResultsRecorder final : public NoCopy {
     Out<Results> results_;
     NameStack contextStack_;
 
 public:
     ContextResultsRecorder(Out<Results> results) : results_(results) {}
     const NameStack& contextStack() const { return contextStack_; }
-    void push(string name)
-    {
+    void push(string name) {
         results_->beginContext(contextStack_, name);
         contextStack_.push(move(name));
     }
 
-    void pop(const Stats& stats)
-    {
+    void pop(const Stats& stats) {
         auto name = contextStack_.stack().back();
         results_->endContext(stats, contextStack_, name);
         contextStack_.pop();
     }
 
-    void beginGiven(const string& name)
-    {
+    void beginGiven(const string& name) {
         results_->beginGiven(contextStack_, name);
     }
 
-    void endGiven(const Stats& stats, const string& name)
-    {
+    void endGiven(const Stats& stats, const string& name) {
         results_->endGiven(stats, contextStack_, name);
     }
 
     void beginWhen(
         const string& given,
         const NameStack& whenStack,
-        const string& name)
-    {
+        const string& name) {
         results_->beginWhen(contextStack_, given, whenStack, name);
     }
     void endWhen(
         const Stats& stats,
         const string& given,
         const NameStack& whenStack,
-        const string& name)
-    {
+        const string& name) {
         results_->endWhen(stats, contextStack_, given, whenStack, name);
     }
 
     void failByException(
         const string& given,
         const NameStack& whenStack,
-        const exception& e)
-    {
+        const exception& e) {
         results_->failByException(contextStack_, given, whenStack, e);
     }
 
@@ -131,8 +119,7 @@ public:
         const NameStack& whenStack,
         optional<string> description,
         const string& expressionText,
-        const vector<Variable>& variableList)
-    {
+        const vector<Variable>& variableList) {
         return results_->fail(
             contextStack_,
             given,
@@ -147,8 +134,7 @@ public:
         const NameStack& whenStack,
         optional<string> description,
         const string& expressionText,
-        const vector<Variable>& variableList)
-    {
+        const vector<Variable>& variableList) {
         return results_->pass(
             contextStack_,
             given,
@@ -159,46 +145,38 @@ public:
     }
 };
 
-class WhenResultRecorder final : public FailureHandler
-{
+class WhenResultRecorder final : public FailureHandler {
     Out<ContextResultsRecorder> results_;
     string given_;
     NameStack whenStack_;
 
 public:
     WhenResultRecorder(Out<ContextResultsRecorder> results, string given)
-        : results_(results), given_(move(given))
-    {
-    }
+        : results_(results), given_(move(given)) {}
 
-    void push(string name)
-    {
+    void push(string name) {
         results_->beginWhen(given_, whenStack_, name);
         whenStack_.push(move(name));
     }
 
-    void pop(const Stats& stats)
-    {
+    void pop(const Stats& stats) {
         string name = whenStack_.stack().back();
         whenStack_.pop();
         results_->endWhen(stats, given_, whenStack_, name);
     }
 
-    void failByException(const exception& e)
-    {
+    void failByException(const exception& e) {
         results_->failByException(given_, whenStack_, e);
     }
 
-    virtual bool notifyPassing() const override
-    {
+    virtual bool notifyPassing() const override {
         return results_->notifyPassing();
     }
 
     virtual void fail(
         optional<string> description,
         const string& expressionText,
-        const vector<Variable>& variableList) override
-    {
+        const vector<Variable>& variableList) override {
         return results_->fail(
             given_, whenStack_, description, expressionText, variableList);
     }
@@ -206,15 +184,13 @@ public:
     virtual void pass(
         optional<string> description,
         const string& expressionText,
-        const vector<Variable>& variableList) override
-    {
+        const vector<Variable>& variableList) override {
         return results_->pass(
             given_, whenStack_, description, expressionText, variableList);
     }
 };
 
-class Context : public NoCopy
-{
+class Context : public NoCopy {
 public:
     virtual ~Context() {}
     virtual void list(
@@ -229,16 +205,13 @@ public:
 
 using ContextList = vector<unique_ptr<Context>>;
 
-class Register final : public NoCopyMove
-{
+class Register final : public NoCopyMove {
 public:
-    static void add(unique_ptr<Context> context)
-    {
+    static void add(unique_ptr<Context> context) {
         instance().contextList.emplace_back(move(context));
     }
 
-    static void list(const PathList& pathList, Out<Results> results)
-    {
+    static void list(const PathList& pathList, Out<Results> results) {
         ContextResultsRecorder resultsRecorder(results);
 
         for (const auto& context : instance().contextList) {
@@ -246,8 +219,7 @@ public:
         }
     }
 
-    static Stats run(const PathList& pathList, Out<Results> results)
-    {
+    static Stats run(const PathList& pathList, Out<Results> results) {
         Stats stats;
 
         ContextResultsRecorder resultsRecorder(results);
@@ -263,8 +235,7 @@ public:
 private:
     Register() = default;
 
-    static Register& instance()
-    {
+    static Register& instance() {
         static Register theInstance;
 
         return theInstance;
@@ -273,19 +244,15 @@ private:
     ContextList contextList;
 };
 
-class NodeContext final : public Context
-{
+class NodeContext final : public Context {
 public:
     NodeContext(const string& name, vector<unique_ptr<Context>> contextList)
-        : name(name), contextList(move(contextList))
-    {
-    }
+        : name(name), contextList(move(contextList)) {}
 
     virtual void list(
         const PathList& pathList,
         Out<ContextResultsRecorder> results,
-        size_t depth) const override
-    {
+        size_t depth) const override {
         auto nextPathList = getMatchingPaths(pathList, depth);
         results->push(name);
 
@@ -302,8 +269,7 @@ public:
     virtual Stats
     run(const PathList& pathList,
         Out<ContextResultsRecorder> results,
-        size_t depth) override
-    {
+        size_t depth) override {
         Stats stats;
         auto nextPathList = getMatchingPaths(pathList, depth);
         results->push(name);
@@ -321,11 +287,8 @@ public:
 
 private:
     optional<PathList>
-    getMatchingPaths(const PathList& pathList, size_t depth) const
-    {
-        if (pathList.empty()) {
-            return pathList;
-        }
+    getMatchingPaths(const PathList& pathList, size_t depth) const {
+        if (pathList.empty()) { return pathList; }
 
         vector<shared_ptr<vector<regex>>> nextPathList;
 
@@ -335,15 +298,12 @@ private:
                     nextPathList.push_back(path);
                 }
             }
-            else
-            {
+            else {
                 return pathList;
             }
         }
 
-        if (nextPathList.empty()) {
-            return none;
-        }
+        if (nextPathList.empty()) { return none; }
 
         return move(nextPathList);
     }
@@ -356,8 +316,7 @@ template <typename... ContextListType>
 void makeContextList(
     Out<ContextList> contextList,
     unique_ptr<Context> childContext,
-    ContextListType&&... childContextList)
-{
+    ContextListType&&... childContextList) {
     contextList->emplace_back(move(childContext));
     makeContextList(contextList, forward<ContextListType>(childContextList)...);
 }
@@ -365,8 +324,7 @@ void makeContextList(
 inline void makeContextList(Out<ContextList>) {}
 template <typename... ContextListType>
 unique_ptr<Context>
-context(const string& name, ContextListType&&... childContextList)
-{
+context(const string& name, ContextListType&&... childContextList) {
     ContextList contextList;
     makeContextList(
         out(contextList), forward<ContextListType>(childContextList)...);
@@ -374,21 +332,17 @@ context(const string& name, ContextListType&&... childContextList)
     return make_unique<NodeContext>(name, move(contextList));
 }
 
-class Suite : public NoCopy
-{
+class Suite : public NoCopy {
 public:
     template <typename... ContextListType>
-    Suite(const string& name, ContextListType&&... childContextList)
-    {
+    Suite(const string& name, ContextListType&&... childContextList) {
         Register::add(
             context(name, forward<ContextListType>(childContextList)...));
     }
 };
 
-class WhenRunner final : public FailureHandler
-{
-    struct StackElement
-    {
+class WhenRunner final : public FailureHandler {
+    struct StackElement {
         size_t index = 0;
         size_t current = 0;
     };
@@ -398,8 +352,7 @@ class WhenRunner final : public FailureHandler
     WhenResultRecorder whenResultRecorder_;
     size_t whenDepth_ = 0;
 
-    bool topWhenDone() const
-    {
+    bool topWhenDone() const {
         const auto& top = whenStack.back();
 
         return top.current == top.index + 1;
@@ -407,16 +360,13 @@ class WhenRunner final : public FailureHandler
 
 public:
     WhenRunner(Out<ContextResultsRecorder> results, string given)
-        : whenResultRecorder_(results, move(given))
-    {
-    }
+        : whenResultRecorder_(results, move(given)) {}
 
     template <typename Functor, typename... Args>
     void run(Functor&& functor, Args&&... args);
 
     template <typename Functor>
-    void when(string description, Functor&& functor)
-    {
+    void when(string description, Functor&& functor) {
         if (whenStack.size() <= whenDepth_) {
             whenStack.push_back(StackElement{});
         }
@@ -437,16 +387,14 @@ public:
         }
     }
 
-    virtual bool notifyPassing() const override
-    {
+    virtual bool notifyPassing() const override {
         return whenResultRecorder_.notifyPassing();
     }
 
     virtual void fail(
         optional<string> description,
         const string& expressionText,
-        const vector<Variable>& variableList) override
-    {
+        const vector<Variable>& variableList) override {
         return whenResultRecorder_.fail(
             description, expressionText, variableList);
     }
@@ -454,8 +402,7 @@ public:
     virtual void pass(
         optional<string> description,
         const string& expressionText,
-        const vector<Variable>& variableList) override
-    {
+        const vector<Variable>& variableList) override {
         return whenResultRecorder_.pass(
             description, expressionText, variableList);
     }
@@ -463,19 +410,15 @@ public:
     const Stats& stats() const { return stats_; }
 };
 
-class Check : public NoCopy
-{
+class Check : public NoCopy {
     Out<WhenRunner> whenRunner_;
     Stats stats_;
 
     friend inline Stats checkStats(const Check& check) { return check.stats_; }
-    bool addCheck(bool ok)
-    {
+    bool addCheck(bool ok) {
         stats_.addCheck();
 
-        if (!ok) {
-            stats_.failCheck();
-        }
+        if (!ok) { stats_.failCheck(); }
 
         return ok;
     }
@@ -483,29 +426,26 @@ class Check : public NoCopy
 public:
     Check(Out<WhenRunner> whenRunner) : whenRunner_(whenRunner) {}
     template <typename Functor>
-    void when(string description, Functor&& functor)
-    {
+    void when(string description, Functor&& functor) {
         whenRunner_->when(move(description), forward<Functor>(functor));
     }
 
     template <typename... Args>
-    bool operator()(Args&&... args)
-    {
+    bool operator()(Args&&... args) {
         return addCheck(
             CheckWithFailureHandler(whenRunner_, forward<Args>(args)...));
     }
 
     template <typename Exception = exception, typename... Args>
-    bool throws(Args&&... args)
-    {
+    bool throws(Args&&... args) {
         return addCheck(
             CheckThrowsWithFailureHandler<Exception>(
                 whenRunner_, forward<Args>(args)...));
     }
 
     template <typename Expression, typename... ContextVariableList>
-    void fail(Expression expression, ContextVariableList... contextVariableList)
-    {
+    void
+    fail(Expression expression, ContextVariableList... contextVariableList) {
         processFailure(
             whenRunner_, none, move(expression), move(contextVariableList)...);
         stats_.failCheck();
@@ -513,65 +453,46 @@ public:
 };
 
 template <typename Functor, typename... Args>
-void WhenRunner::run(Functor&& functor, Args&&... args)
-{
+void WhenRunner::run(Functor&& functor, Args&&... args) {
     whenStack.clear();
     whenDepth_ = 0;
     stats_.addFixture(); // TODO:
 
-    do
-    {
-        for (auto& element : whenStack) {
-            element.current = 0;
-        }
+    do {
+        for (auto& element : whenStack) { element.current = 0; }
 
         Check check(out(*this));
 
-        try
-        {
+        try {
             functor(check, forward<Args>(args)...);
         }
-        catch (const exception& e)
-        {
+        catch (const exception& e) {
             whenResultRecorder_.failByException(e);
             stats_.failTest();
         }
 
         stats_.addTest(); // TODO
 
-        while (!whenStack.empty() && topWhenDone()) {
-            whenStack.pop_back();
-        }
+        while (!whenStack.empty() && topWhenDone()) { whenStack.pop_back(); }
 
-        if (!whenStack.empty()) {
-            ++whenStack.back().index;
-        }
+        if (!whenStack.empty()) { ++whenStack.back().index; }
 
         stats_ += checkStats(check);
     } while (!whenStack.empty());
 
-    if (stats_.tests() == 0) {
-        stats_.addTest();
-    }
+    if (stats_.tests() == 0) { stats_.addTest(); }
 }
 
 template <typename Functor, typename... Args>
-class Runner final : public Context
-{
-    bool included(const PathList& pathList, size_t depth) const
-    {
-        if (pathList.empty()) {
-            return true;
-        }
+class Runner final : public Context {
+    bool included(const PathList& pathList, size_t depth) const {
+        if (pathList.empty()) { return true; }
 
         for (const auto& path : pathList) {
             if (path->size() > depth) {
-                if (regex_match(name, (*path)[depth])) {
-                    return true;
-                }
+                if (regex_match(name, (*path)[depth])) { return true; }
             }
-            else
-            {
+            else {
                 return true;
             }
         }
@@ -585,15 +506,14 @@ class Runner final : public Context
 
 public:
     Runner(string name, Functor runTest, Args&&... args)
-        : name(move(name)), runTest(move(runTest)), args(forward<Args>(args)...)
-    {
-    }
+        : name(move(name)),
+          runTest(move(runTest)),
+          args(forward<Args>(args)...) {}
 
     virtual void list(
         const PathList& pathList,
         Out<ContextResultsRecorder> results,
-        size_t depth) const override
-    {
+        size_t depth) const override {
         if (!included(pathList, depth)) return;
 
         results->beginGiven(name);
@@ -606,8 +526,7 @@ public:
     virtual Stats
     run(const PathList& pathList,
         Out<ContextResultsRecorder> results,
-        size_t depth) override
-    {
+        size_t depth) override {
         results->beginGiven(name);
         Stats stats;
 
@@ -622,8 +541,7 @@ public:
 };
 
 template <typename Functor, typename... Args>
-class RunTest final : public NoCopy
-{
+class RunTest final : public NoCopy {
     Functor runTest;
 
 public:
@@ -634,8 +552,7 @@ public:
     Stats operator()(
         const string& name,
         Out<ContextResultsRecorder> results,
-        Args&&... args)
-    {
+        Args&&... args) {
         WhenRunner whenRunner(results, name);
         whenRunner.run(runTest, forward<Args>(args)...);
 
@@ -646,28 +563,23 @@ public:
 // Workaround for MSVC bug. We should be able to use std forward, but it doesn't
 // work for decayed arrays.
 template <typename T>
-struct Forward
-{
-    static constexpr T&& run(typename std::remove_reference<T>::type& t)
-    {
+struct Forward {
+    static constexpr T&& run(typename std::remove_reference<T>::type& t) {
         return std::forward<T>(t);
     }
 
-    static constexpr T&& run(typename std::remove_reference<T>::type&& t)
-    {
+    static constexpr T&& run(typename std::remove_reference<T>::type&& t) {
         return std::forward<T>(t);
     }
 };
 
 template <typename T>
-struct Forward<T*>
-{
+struct Forward<T*> {
     static T* run(T* t) { return t; }
 };
 
 template <typename Functor, typename... Args>
-unique_ptr<Context> given(string name, Functor runTest, Args&&... args)
-{
+unique_ptr<Context> given(string name, Functor runTest, Args&&... args) {
     return make_unique<
         Runner<RunTest<Functor, DecayArrayAndFunction_t<Args>...>,
                DecayArrayAndFunction_t<Args>...>>(
@@ -677,8 +589,7 @@ unique_ptr<Context> given(string name, Functor runTest, Args&&... args)
 }
 
 template <typename Functor, typename... Args>
-class RunExhaustive final : public NoCopy
-{
+class RunExhaustive final : public NoCopy {
     Functor runTest;
     StoreArgs<Args...> args;
 
@@ -686,8 +597,7 @@ class RunExhaustive final : public NoCopy
     static Stats exhaustive(
         BoundFunctor&& functor,
         const string& name,
-        Out<ContextResultsRecorder> results)
-    {
+        Out<ContextResultsRecorder> results) {
         WhenRunner whenRunner(results, name);
         whenRunner.run(forward<BoundFunctor>(functor));
 
@@ -700,8 +610,7 @@ class RunExhaustive final : public NoCopy
         const string& name,
         Out<ContextResultsRecorder> results,
         const Container& container,
-        const BoundArgs&... tail)
-    {
+        const BoundArgs&... tail) {
         Stats stats;
 
         for (const auto& value : container) {
@@ -719,12 +628,9 @@ class RunExhaustive final : public NoCopy
 
 public:
     RunExhaustive(Functor runTest, StoreArgs<Args...> args)
-        : runTest(move(runTest)), args(move(args))
-    {
-    }
+        : runTest(move(runTest)), args(move(args)) {}
 
-    Stats operator()(const string& name, Out<ContextResultsRecorder> results)
-    {
+    Stats operator()(const string& name, Out<ContextResultsRecorder> results) {
         return args.apply([&](const Args&... extractedArgs) {
             return exhaustive(move(runTest), name, results, extractedArgs...);
         });
@@ -732,27 +638,23 @@ public:
 };
 
 template <typename Value, typename... Args>
-vector<Value> choice(Value value, Args&&... tail)
-{
+vector<Value> choice(Value value, Args&&... tail) {
     return vector<Value>{value, forward<Args>(tail)...};
 }
 
 template <typename Value>
-vector<Value> constant(Value value)
-{
+vector<Value> constant(Value value) {
     return vector<Value>(1, value);
 }
 
 template <typename... Args>
-class Exhaustive final : public NoCopy
-{
+class Exhaustive final : public NoCopy {
     StoreArgs<Args...> args;
 
 public:
     Exhaustive(Args&&... args) : args(forward<Args>(args)...) {}
     template <typename Functor>
-    unique_ptr<Context> given(string name, Functor runTest)
-    {
+    unique_ptr<Context> given(string name, Functor runTest) {
         return make_unique<Runner<RunExhaustive<Functor, Args...>>>(
             move(name),
             RunExhaustive<Functor, Args...>(move(runTest), move(args)));
@@ -760,32 +662,27 @@ public:
 };
 
 template <typename... Args>
-Exhaustive<Args...> exhaustive(Args&&... args)
-{
+Exhaustive<Args...> exhaustive(Args&&... args) {
     return Exhaustive<DecayArrayAndFunction_t<Args>...>(
         forward<DecayArrayAndFunction_t<Args>>(args)...);
 }
 
-inline void list(const PathList& pathList, Out<Results> results)
-{
+inline void list(const PathList& pathList, Out<Results> results) {
     Register::list(pathList, results);
 }
 
-inline bool run(const PathList& pathList, Out<Results> results)
-{
+inline bool run(const PathList& pathList, Out<Results> results) {
     auto stats = Register::run(pathList, results);
 
     return stats.failedTests() == 0 && stats.failedChecks() == 0;
 }
 
-inline void list(const PathList& pathList, Verbosity verbosity)
-{
+inline void list(const PathList& pathList, Verbosity verbosity) {
     HumanResults results(out(cout), verbosity);
     return list(pathList, out(results));
 }
 
-inline bool run(const PathList& pathList, Verbosity verbosity)
-{
+inline bool run(const PathList& pathList, Verbosity verbosity) {
     HumanResults results(out(cout), verbosity);
     return run(pathList, out(results));
 }
@@ -794,10 +691,8 @@ inline bool run(const PathList& pathList, Verbosity verbosity)
 }
 }
 
-namespace Enhedron
-{
-namespace Test
-{
+namespace Enhedron {
+namespace Test {
 using namespace Assertion;
 
 using Impl::Impl_Suite::Suite;

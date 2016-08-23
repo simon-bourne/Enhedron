@@ -17,7 +17,7 @@ AlwaysBreakTemplateDeclarations: 'true'
 BinPackArguments: 'false'
 BinPackParameters: 'false'
 # Configure each individual brace in BraceWrapping
-BreakBeforeBraces: 'Allman'
+BreakBeforeBraces: 'Custom'
 
 # Disabled (BreakBeforeBraces != Custom)
 BraceWrapping: {
@@ -42,7 +42,7 @@ DisableFormat: 'false'
 ExperimentalAutoDetectBinPacking: 'false'
 IndentCaseLabels: 'true'
 IndentWidth: 4
-KeepEmptyLinesAtTheStartOfBlocks: 'false'
+KeepEmptyLinesAtTheStartOfBlocks: 'true'
 Language: Cpp
 MaxEmptyLinesToKeep: '1'
 NamespaceIndentation: None

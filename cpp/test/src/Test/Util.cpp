@@ -14,8 +14,7 @@
 #include <string>
 #include <utility>
 
-namespace Enhedron
-{
+namespace Enhedron {
 using std::string;
 using std::pair;
 using std::make_pair;
@@ -26,8 +25,7 @@ using namespace Math;
 
 static constexpr const char helloWorld[] = "Hello World!";
 
-enum class SimpleEnum
-{
+enum class SimpleEnum {
     VALUE_0,
     VALUE_1,
     LAST_ENUM_VALUE = SimpleEnum::VALUE_1

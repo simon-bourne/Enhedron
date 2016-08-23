@@ -11,27 +11,20 @@
 #include <type_traits>
 #include <utility>
 
-namespace Enhedron
-{
-namespace Util
-{
-namespace Impl
-{
-namespace Impl_Optional
-{
+namespace Enhedron {
+namespace Util {
+namespace Impl {
+namespace Impl_Optional {
 using std::unique_ptr;
 using std::make_unique;
 using std::forward;
 
-class None final
-{
-};
+class None final {};
 
 static constexpr const None none{};
 
 template <typename Value>
-class optional final
-{
+class optional final {
     unique_ptr<Value> value_;
 
     template <typename Other>
@@ -40,24 +33,16 @@ class optional final
 public:
     optional() = default;
 
-    optional(const optional<Value>& other)
-    {
-        if (bool(other)) {
-            value_ = make_unique<Value>(*other.value_);
-        }
-        else
-        {
+    optional(const optional<Value>& other) {
+        if (bool(other)) { value_ = make_unique<Value>(*other.value_); }
+        else {
             value_.reset();
         }
     }
 
-    optional<Value>& operator=(const optional<Value>& other)
-    {
-        if (bool(other)) {
-            value_ = make_unique<Value>(*other.value_);
-        }
-        else
-        {
+    optional<Value>& operator=(const optional<Value>& other) {
+        if (bool(other)) { value_ = make_unique<Value>(*other.value_); }
+        else {
             value_.reset();
         }
 
@@ -68,9 +53,8 @@ public:
     optional& operator=(optional<Value>&&) = default;
 
     optional(const Value& value) : value_(make_unique<Value>(value)) {}
-    optional(Value&& value) : value_(make_unique<Value>(forward<Value>(value)))
-    {
-    }
+    optional(Value&& value)
+        : value_(make_unique<Value>(forward<Value>(value))) {}
     optional(None) {}
     Value& get() const { return *value_; }
     Value& operator*() const { return *value_; }
@@ -80,8 +64,7 @@ public:
 };
 
 template <typename Value>
-class optional<Value&> final
-{
+class optional<Value&> final {
     Value* value_ = nullptr;
 
 public:
@@ -99,10 +82,8 @@ public:
 }
 }
 
-namespace Enhedron
-{
-namespace Util
-{
+namespace Enhedron {
+namespace Util {
 using Impl::Impl_Optional::none;
 using Impl::Impl_Optional::optional;
 }

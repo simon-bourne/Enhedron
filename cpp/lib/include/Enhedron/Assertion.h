@@ -16,12 +16,9 @@
 #include <utility>
 #include <vector>
 
-namespace Enhedron
-{
-namespace Impl
-{
-namespace Impl_Assertion
-{
+namespace Enhedron {
+namespace Impl {
+namespace Impl_Assertion {
 using ::Enhedron::Util::optional;
 
 using std::forward;
@@ -33,27 +30,22 @@ using std::runtime_error;
 
 using namespace ::Enhedron::Assertion;
 
-struct CerrFailureHandler final : FailureHandler
-{
+struct CerrFailureHandler final : FailureHandler {
     virtual ~CerrFailureHandler() override {}
     virtual bool notifyPassing() const override { return false; }
     virtual void
-    pass(optional<string>, const string&, const vector<Variable>&) override
-    {
-    }
+    pass(optional<string>, const string&, const vector<Variable>&) override {}
 
     virtual void fail(
         optional<string> description,
         const string& expressionText,
-        const vector<Variable>& variableList) override
-    {
+        const vector<Variable>& variableList) override {
         cerr << "Assert failed: ";
 
         if (description) {
             cerr << *description << " (" << expressionText << ")\n";
         }
-        else
-        {
+        else {
             cerr << expressionText << "\n";
         }
 
@@ -71,29 +63,25 @@ struct CerrFailureHandler final : FailureHandler
     }
 };
 
-inline Out<CerrFailureHandler> failureHandler()
-{
+inline Out<CerrFailureHandler> failureHandler() {
     static CerrFailureHandler instance;
     return out(instance);
 }
 
 template <typename... Args>
-void Assert(Args&&... args)
-{
+void Assert(Args&&... args) {
     CheckWithFailureHandler(failureHandler(), forward<Args>(args)...);
 }
 
 template <typename Exception, typename... Args>
-void AssertThrows(Args&&... args)
-{
+void AssertThrows(Args&&... args) {
     CheckThrowsWithFailureHandler<Exception>(
         failureHandler(), forward<Args>(args)...);
 }
 
 // Always throws an exception or aborts
 template <typename... Args>
-[[noreturn]] void AssertUnreachable(Args&&... args)
-{
+[[noreturn]] void AssertUnreachable(Args&&... args) {
     processFailure(
         failureHandler(),
         string("unreachableViolation"),
@@ -105,8 +93,7 @@ template <typename... Args>
 }
 }
 
-namespace Enhedron
-{
+namespace Enhedron {
 using Impl::Impl_Assertion::Assert;
 using Impl::Impl_Assertion::AssertThrows;
 using Impl::Impl_Assertion::AssertUnreachable;

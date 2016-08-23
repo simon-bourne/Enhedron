@@ -19,14 +19,10 @@
 #include <utility>
 #include <vector>
 
-namespace Enhedron
-{
-namespace Test
-{
-namespace Impl
-{
-namespace Impl_Harness
-{
+namespace Enhedron {
+namespace Test {
+namespace Impl {
+namespace Impl_Harness {
 using std::string;
 using std::move;
 using std::vector;
@@ -45,8 +41,7 @@ using CommandLine::Option;
 using CommandLine::Name;
 using CommandLine::Arguments;
 
-inline Verbosity parseVerbosity(string v)
-{
+inline Verbosity parseVerbosity(string v) {
     transform(v.begin(), v.end(), v.begin(), [](char c) {
         return tolower(c, locale());
     });
@@ -65,8 +60,7 @@ inline Verbosity parseVerbosity(string v)
 }
 
 inline ExitStatus
-runTests(bool listOnly, string verbosityString, vector<string> pathList)
-{
+runTests(bool listOnly, string verbosityString, vector<string> pathList) {
     vector<shared_ptr<vector<regex>>> pathRegexs;
 
     for (auto& path : pathList) {
@@ -83,11 +77,8 @@ runTests(bool listOnly, string verbosityString, vector<string> pathList)
             while (end != pathEnd && end + 1 != pathEnd && *end == '\\') {
                 ++end;
 
-                if (*end == '/') {
-                    copy(end, pathEnd, end - 1);
-                }
-                else
-                {
+                if (*end == '/') { copy(end, pathEnd, end - 1); }
+                else {
                     ++end;
                 }
 
@@ -98,9 +89,7 @@ runTests(bool listOnly, string verbosityString, vector<string> pathList)
                 pathComponentList.emplace_back(separatorPos, end);
             }
 
-            if (end == pathEnd) {
-                break;
-            }
+            if (end == pathEnd) { break; }
 
             separatorPos = end;
             ++separatorPos;
@@ -112,21 +101,15 @@ runTests(bool listOnly, string verbosityString, vector<string> pathList)
 
     Verbosity verbosity = parseVerbosity(verbosityString);
 
-    if (listOnly) {
-        Test::list(pathRegexs, verbosity);
-    }
-    else
-    {
-        if (!Test::run(pathRegexs, verbosity)) {
-            return ExitStatus::SOFTWARE;
-        }
+    if (listOnly) { Test::list(pathRegexs, verbosity); }
+    else {
+        if (!Test::run(pathRegexs, verbosity)) { return ExitStatus::SOFTWARE; }
     }
 
     return ExitStatus::OK;
 }
 
-inline int run(int argc, const char* argv[])
-{
+inline int run(int argc, const char* argv[]) {
     Arguments args("MosquitoNet test harness version 0.0.0");
     args.setDescription("Test Harness");
     args.setPositionalDescription("TEST_PATH");
@@ -147,10 +130,8 @@ inline int run(int argc, const char* argv[])
 }
 }
 
-namespace Enhedron
-{
-namespace Test
-{
+namespace Enhedron {
+namespace Test {
 using Impl::Impl_Harness::run;
 }
 }

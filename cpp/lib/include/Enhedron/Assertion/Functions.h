@@ -13,14 +13,10 @@
 #include <type_traits>
 #include <utility>
 
-namespace Enhedron
-{
-namespace Assertion
-{
-namespace Impl
-{
-namespace Impl_Functions
-{
+namespace Enhedron {
+namespace Assertion {
+namespace Impl {
+namespace Impl_Functions {
 using std::forward;
 using std::count;
 using std::count_if;
@@ -32,8 +28,7 @@ using std::search;
 using std::remove_reference_t;
 
 template <typename Container, typename Value>
-auto countEqual(Container&& container, Value&& value)
-{
+auto countEqual(Container&& container, Value&& value) {
     return makeFunction("countEqual", [](auto&& container, auto&& value) {
         return count(
             container.begin(),
@@ -43,8 +38,7 @@ auto countEqual(Container&& container, Value&& value)
 }
 
 template <typename Container, typename Predicate>
-auto countMatching(Container&& container, Predicate&& predicate)
-{
+auto countMatching(Container&& container, Predicate&& predicate) {
     return makeFunction(
         "countMatching", [](auto&& container, auto&& predicate) {
             return count_if(
@@ -55,8 +49,7 @@ auto countMatching(Container&& container, Predicate&& predicate)
 }
 
 template <typename Container, typename Predicate>
-auto allOf(Container&& container, Predicate&& predicate)
-{
+auto allOf(Container&& container, Predicate&& predicate) {
     return makeFunction("allOf", [](auto&& container, auto&& predicate) {
         return all_of(
             container.begin(),
@@ -66,8 +59,7 @@ auto allOf(Container&& container, Predicate&& predicate)
 }
 
 template <typename Container, typename Predicate>
-auto anyOf(Container&& container, Predicate&& predicate)
-{
+auto anyOf(Container&& container, Predicate&& predicate) {
     return makeFunction("anyOf", [](auto&& container, auto&& predicate) {
         return any_of(
             container.begin(),
@@ -77,8 +69,7 @@ auto anyOf(Container&& container, Predicate&& predicate)
 }
 
 template <typename Container, typename Predicate>
-auto noneOf(Container&& container, Predicate&& predicate)
-{
+auto noneOf(Container&& container, Predicate&& predicate) {
     return makeFunction("noneOf", [](auto&& container, auto&& predicate) {
         return none_of(
             container.begin(),
@@ -88,16 +79,14 @@ auto noneOf(Container&& container, Predicate&& predicate)
 }
 
 template <typename Container>
-auto length(Container&& container)
-{
+auto length(Container&& container) {
     return makeFunction("length", [](auto&& container) {
         return container.size();
     })(forward<Container>(container));
 }
 
 template <typename MainContainer, typename StartsWithContainer>
-auto startsWith(MainContainer&& container, StartsWithContainer&& starting)
-{
+auto startsWith(MainContainer&& container, StartsWithContainer&& starting) {
     return makeFunction(
         "startsWith",
         [](auto&& container, auto&& starting) {
@@ -109,8 +98,7 @@ auto startsWith(MainContainer&& container, StartsWithContainer&& starting)
 }
 
 template <typename MainContainer, typename EndsWithContainer>
-auto endsWith(MainContainer&& container, EndsWithContainer&& ending)
-{
+auto endsWith(MainContainer&& container, EndsWithContainer&& ending) {
     return makeFunction("endsWith", [](auto&& container, auto&& ending) {
         using ContainerType = remove_reference_t<decltype(container)>;
         auto size =
@@ -121,8 +109,7 @@ auto endsWith(MainContainer&& container, EndsWithContainer&& ending)
 }
 
 template <typename MainContainer, typename Contained>
-auto contains(MainContainer&& mainContainer, Contained&& contained)
-{
+auto contains(MainContainer&& mainContainer, Contained&& contained) {
     return makeFunction("contains", [](auto&& mainContainer, auto&& contained) {
         return mainContainer.end() !=
             search(mainContainer.begin(),
@@ -136,10 +123,8 @@ auto contains(MainContainer&& mainContainer, Contained&& contained)
 }
 }
 
-namespace Enhedron
-{
-namespace Assertion
-{
+namespace Enhedron {
+namespace Assertion {
 using Impl::Impl_Functions::countEqual;
 using Impl::Impl_Functions::countMatching;
 using Impl::Impl_Functions::allOf;

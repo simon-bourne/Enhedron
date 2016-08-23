@@ -16,14 +16,10 @@
 #include <string>
 #include <vector>
 
-namespace Enhedron
-{
-namespace Test
-{
-namespace Impl
-{
-namespace Impl_Results
-{
+namespace Enhedron {
+namespace Test {
+namespace Impl {
+namespace Impl_Results {
 using std::exception;
 using std::string;
 using std::unique_ptr;
@@ -39,8 +35,7 @@ using Assertion::FailureHandler;
 using Assertion::Variable;
 using Util::optional;
 
-class Stats
-{
+class Stats {
     uint64_t fixtures_ = 0;
     uint64_t tests_ = 0;
     uint64_t checks_ = 0;
@@ -48,8 +43,7 @@ class Stats
     uint64_t failedChecks_ = 0;
 
 public:
-    Stats& operator+=(Stats rhs)
-    {
+    Stats& operator+=(Stats rhs) {
         fixtures_ += rhs.fixtures_;
         tests_ += rhs.tests_;
         checks_ += rhs.checks_;
@@ -73,22 +67,19 @@ public:
 // Wrapper, as we may add more functionality here. Such as tracking how much of
 // the stack has
 // been seen before.
-class NameStack final : public NoCopy
-{
+class NameStack final : public NoCopy {
     vector<string> stack_;
 
 public:
     const vector<string>& stack() const { return stack_; }
     void push(string name) { stack_.emplace_back(move(name)); }
-    void pop()
-    {
+    void pop() {
         Assert(!VAR(stack_.empty()));
         stack_.pop_back();
     }
 };
 
-struct Results : public NoCopy
-{
+struct Results : public NoCopy {
     virtual ~Results() {}
     virtual void finish(const Stats& stats) = 0;
 
@@ -142,8 +133,7 @@ struct Results : public NoCopy
         const exception& e) = 0;
 };
 
-enum class Verbosity
-{
+enum class Verbosity {
     SILENT,
     SUMMARY,
     CONTEXTS,
@@ -155,28 +145,20 @@ enum class Verbosity
     VARIABLES
 };
 
-enum class WrittenState
-{
-    NONE,
-    CONTEXT,
-    GIVEN
-};
+enum class WrittenState { NONE, CONTEXT, GIVEN };
 
-class HumanResults final : public Results
-{
+class HumanResults final : public Results {
     Out<ostream> output_;
     Verbosity verbosity_;
     WrittenState writtenState_ = WrittenState::NONE;
     size_t whenDepth_ = 0;
     size_t whenWrittenDepth_ = 0;
 
-    void setMaxWrittenState(WrittenState maxState)
-    {
+    void setMaxWrittenState(WrittenState maxState) {
         if (writtenState_ > maxState) writtenState_ = maxState;
     }
 
-    bool writeNeeded(WrittenState state)
-    {
+    bool writeNeeded(WrittenState state) {
         if (writtenState_ < state) {
             writtenState_ = state;
             return true;
@@ -185,16 +167,14 @@ class HumanResults final : public Results
         return false;
     }
 
-    void writeContext(const NameStack& contextStack)
-    {
+    void writeContext(const NameStack& contextStack) {
         if (writeNeeded(WrittenState::CONTEXT)) {
             if (!contextStack.stack().empty()) {
                 *output_ << contextStack.stack().front();
 
                 for (auto contextIter = contextStack.stack().begin() + 1;
                      contextIter != contextStack.stack().end();
-                     ++contextIter)
-                {
+                     ++contextIter) {
                     *output_ << "/" << *contextIter;
                 }
 
@@ -203,8 +183,7 @@ class HumanResults final : public Results
         }
     }
 
-    void writeGiven(const NameStack& context, const string& given)
-    {
+    void writeGiven(const NameStack& context, const string& given) {
         writeContext(context);
 
         if (writeNeeded(WrittenState::GIVEN)) {
@@ -216,8 +195,7 @@ class HumanResults final : public Results
     void writeWhenStack(
         const NameStack& context,
         const string& given,
-        const NameStack& when)
-    {
+        const NameStack& when) {
         writeGiven(context, given);
 
         size_t depth = whenWrittenDepth_;
@@ -226,8 +204,7 @@ class HumanResults final : public Results
 
         for (auto whenIter = when.stack().begin() + startIndex;
              whenIter != when.stack().end();
-             ++whenIter)
-        {
+             ++whenIter) {
             ++depth;
             indent(depth);
             *output_ << "When : " << *whenIter << "\n";
@@ -236,8 +213,7 @@ class HumanResults final : public Results
         whenWrittenDepth_ = when.stack().size();
     }
 
-    void printVariables(const vector<Variable>& variableList)
-    {
+    void printVariables(const vector<Variable>& variableList) {
         for (const auto& variable : variableList) {
             indent(whenDepth() + 2);
             (*output_) << variable.name() << " = " << variable.value()
@@ -246,16 +222,14 @@ class HumanResults final : public Results
         }
     }
 
-    void indent(size_t indent)
-    {
+    void indent(size_t indent) {
         while (indent > 0) {
             *output_ << "    ";
             --indent;
         }
     }
 
-    size_t whenDepth() const
-    {
+    size_t whenDepth() const {
         static constexpr const size_t minDepth = 1;
 
         return max(minDepth, whenDepth_);
@@ -263,12 +237,9 @@ class HumanResults final : public Results
 
 public:
     HumanResults(Out<ostream> output, Verbosity verbosity)
-        : output_(output), verbosity_(verbosity)
-    {
-    }
+        : output_(output), verbosity_(verbosity) {}
 
-    virtual void finish(const Stats& stats) override
-    {
+    virtual void finish(const Stats& stats) override {
         if (verbosity_ >= Verbosity::SUMMARY) {
             bool failed = false;
 
@@ -286,40 +257,30 @@ public:
                      << stats.checks() << " checks, " << stats.fixtures()
                      << " fixtures\n";
 
-            if (failed) {
-                *output_ << "SOME TESTS FAILED!\n";
-            }
+            if (failed) { *output_ << "SOME TESTS FAILED!\n"; }
         }
     }
 
-    virtual void beginContext(const NameStack&, const string&) override
-    {
+    virtual void beginContext(const NameStack&, const string&) override {
         setMaxWrittenState(WrittenState::NONE);
     }
 
     virtual void
-    endContext(const Stats&, const NameStack&, const string&) override
-    {
+    endContext(const Stats&, const NameStack&, const string&) override {
         setMaxWrittenState(WrittenState::NONE);
     }
 
     virtual void
-    beginGiven(const NameStack& context, const string& given) override
-    {
+    beginGiven(const NameStack& context, const string& given) override {
         setMaxWrittenState(WrittenState::GIVEN);
 
-        if (verbosity_ >= Verbosity::CONTEXTS) {
-            writeContext(context);
-        }
+        if (verbosity_ >= Verbosity::CONTEXTS) { writeContext(context); }
 
-        if (verbosity_ >= Verbosity::FIXTURES) {
-            writeGiven(context, given);
-        }
+        if (verbosity_ >= Verbosity::FIXTURES) { writeGiven(context, given); }
     }
 
     virtual void
-    endGiven(const Stats&, const NameStack&, const string&) override
-    {
+    endGiven(const Stats&, const NameStack&, const string&) override {
         setMaxWrittenState(WrittenState::CONTEXT);
     }
 
@@ -327,13 +288,10 @@ public:
         const NameStack& context,
         const string& given,
         const NameStack&,
-        const string& when) override
-    {
+        const string& when) override {
         ++whenDepth_;
 
-        if (verbosity_ >= Verbosity::FIXTURES) {
-            writeGiven(context, given);
-        }
+        if (verbosity_ >= Verbosity::FIXTURES) { writeGiven(context, given); }
 
         if (verbosity_ >= Verbosity::SECTIONS) {
             indent(whenDepth());
@@ -347,8 +305,7 @@ public:
         const NameStack&,
         const string&,
         const NameStack&,
-        const string&) override
-    {
+        const string&) override {
         --whenDepth_;
         whenWrittenDepth_ = min(whenDepth_, whenWrittenDepth_);
 
@@ -356,17 +313,13 @@ public:
             *output_ << "\n";
         }
 
-        if (whenDepth_ == 0) {
-            setMaxWrittenState(WrittenState::CONTEXT);
-        }
-        else
-        {
+        if (whenDepth_ == 0) { setMaxWrittenState(WrittenState::CONTEXT); }
+        else {
             setMaxWrittenState(WrittenState::GIVEN);
         }
     }
 
-    virtual bool notifyPassing() const override
-    {
+    virtual bool notifyPassing() const override {
         return verbosity_ >= Verbosity::CHECKS;
     }
 
@@ -376,8 +329,7 @@ public:
         const NameStack& whenStack,
         optional<string> description,
         const string& expressionText,
-        const vector<Variable>& variableList) override
-    {
+        const vector<Variable>& variableList) override {
         writeWhenStack(context, given, whenStack);
         indent(whenDepth());
         (*output_) << "Then : ";
@@ -397,19 +349,14 @@ public:
         const NameStack&,
         optional<string> description,
         const string& expressionText,
-        const vector<Variable>& variableList) override
-    {
+        const vector<Variable>& variableList) override {
         indent(whenDepth());
         (*output_) << "Then : ";
 
-        if (description) {
-            (*output_) << *description << "\n";
-        }
+        if (description) { (*output_) << *description << "\n"; }
 
         if (verbosity_ >= Verbosity::CHECKS_EXPRESSION || !description) {
-            if (description) {
-                indent(whenDepth() + 1);
-            }
+            if (description) { indent(whenDepth() + 1); }
 
             (*output_) << expressionText;
         }
@@ -425,8 +372,7 @@ public:
         const NameStack&,
         const string&,
         const NameStack&,
-        const exception& e) override
-    {
+        const exception& e) override {
         indent(whenDepth());
         (*output_) << "TEST FAILED WITH EXCEPTION: " << e.what() << endl;
     }
@@ -436,10 +382,8 @@ public:
 }
 }
 
-namespace Enhedron
-{
-namespace Test
-{
+namespace Enhedron {
+namespace Test {
 using Impl::Impl_Results::NameStack;
 using Impl::Impl_Results::Results;
 using Impl::Impl_Results::HumanResults;

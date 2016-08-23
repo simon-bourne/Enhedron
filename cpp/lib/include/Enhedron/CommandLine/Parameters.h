@@ -26,80 +26,64 @@
 #include <utility>
 #include <vector>
 
-namespace Enhedron
-{
-namespace CommandLine
-{
+namespace Enhedron {
+namespace CommandLine {
 template <typename Value>
-inline Value fromString(std::string)
-{
+inline Value fromString(std::string) {
     static_assert(sizeof(Value) == 0, "No specialization found for toString");
 }
 
 template <>
-inline std::string fromString<std::string>(std::string s)
-{
+inline std::string fromString<std::string>(std::string s) {
     return s;
 }
 
 template <>
-inline int fromString<int>(std::string s)
-{
+inline int fromString<int>(std::string s) {
     return std::stoi(move(s));
 }
 
 template <>
-inline long fromString<long>(std::string s)
-{
+inline long fromString<long>(std::string s) {
     return std::stol(move(s));
 }
 
 template <>
-inline long long fromString<long long>(std::string s)
-{
+inline long long fromString<long long>(std::string s) {
     return std::stoll(move(s));
 }
 
 template <>
-inline unsigned long fromString<unsigned long>(std::string s)
-{
+inline unsigned long fromString<unsigned long>(std::string s) {
     return std::stoul(move(s));
 }
 
 template <>
-inline unsigned long long fromString<unsigned long long>(std::string s)
-{
+inline unsigned long long fromString<unsigned long long>(std::string s) {
     return std::stoull(move(s));
 }
 
 template <>
-inline float fromString<float>(std::string s)
-{
+inline float fromString<float>(std::string s) {
     return std::stof(move(s));
 }
 
 template <>
-inline double fromString<double>(std::string s)
-{
+inline double fromString<double>(std::string s) {
     return std::stod(move(s));
 }
 
 template <>
-inline long double fromString<long double>(std::string s)
-{
+inline long double fromString<long double>(std::string s) {
     return std::stold(move(s));
 }
 }
 }
 
-namespace Enhedron
-{
-namespace CommandLine
-{
-namespace Impl
-{
-namespace Impl_Parameters
-{
+namespace Enhedron {
+namespace CommandLine {
+namespace Impl {
+namespace Impl_Parameters {
 using Util::bindFirst;
 using Util::optional;
 using Util::mapParameterPack;
@@ -130,8 +114,7 @@ using std::copy;
 using std::is_same;
 using std::enable_if_t;
 
-enum class ExitStatus
-{
+enum class ExitStatus {
     OK,
     USAGE = 64, // command line usage error
     DATAERR = 65, // data format error
@@ -150,8 +133,7 @@ enum class ExitStatus
     CONFIG = 78 // configuration error
 };
 
-class Name : public NoCopy
-{
+class Name : public NoCopy {
     optional<string> shortName_;
     string longName_;
     optional<string> description_;
@@ -159,65 +141,50 @@ class Name : public NoCopy
 public:
     Name(string longName) : longName_("--" + longName) {}
     Name(string longName, string description)
-        : longName_("--" + longName), description_(move(description))
-    {
-    }
+        : longName_("--" + longName), description_(move(description)) {}
 
     Name(char shortName, string longName)
-        : shortName_("-"), longName_("--" + longName)
-    {
+        : shortName_("-"), longName_("--" + longName) {
         shortName_->push_back(shortName);
     }
 
     Name(char shortName, string longName, string description)
         : shortName_("-"),
           longName_("--" + longName),
-          description_(move(description))
-    {
+          description_(move(description)) {
         shortName_->push_back(shortName);
     }
 
     template <typename Functor>
-    void forEachName(Functor&& functor) const
-    {
-        if (shortName_) {
-            functor(*shortName_);
-        }
+    void forEachName(Functor&& functor) const {
+        if (shortName_) { functor(*shortName_); }
 
         functor(longName_);
     }
 
-    bool anyMatch(const char* arg) const
-    {
+    bool anyMatch(const char* arg) const {
         if (shortName_) {
-            if (arg == *shortName_) {
-                return true;
-            }
+            if (arg == *shortName_) { return true; }
         }
 
         return arg == longName_;
     }
 
     const string& longName() const { return longName_; }
-    string makeNamesString() const
-    {
+    string makeNamesString() const {
         string result("  ");
 
-        if (shortName_) {
-            result += *shortName_ + ", ";
-        }
+        if (shortName_) { result += *shortName_ + ", "; }
 
         return result + longName_;
     }
 
-    bool multiLineDescription(size_t width) const
-    {
+    bool multiLineDescription(size_t width) const {
         return description_ && description_->size() > width;
     }
 
     void
-    showDescription(Out<ostream> output, size_t width, size_t padding) const
-    {
+    showDescription(Out<ostream> output, size_t width, size_t padding) const {
         width = max(width, static_cast<size_t>(10u));
 
         if (description_) {
@@ -254,9 +221,7 @@ public:
                 *output << "\n";
                 fill_n(ostream_iterator<char>(*output), padding, ' ');
 
-                while (*current == ' ') {
-                    ++current;
-                }
+                while (*current == ' ') { ++current; }
             }
 
             copy(current, description_->end(), ostream_iterator<char>(*output));
@@ -267,8 +232,7 @@ public:
 };
 
 template <typename ValueType>
-class Option final
-{
+class Option final {
     Name name_;
     string valueName_;
     optional<ValueType> defaultValue_;
@@ -277,58 +241,44 @@ public:
     using Value = ValueType;
 
     Option(Name name, string valueName)
-        : name_(move(name)), valueName_(move(valueName))
-    {
-    }
+        : name_(move(name)), valueName_(move(valueName)) {}
 
     Option(Name name, string valueName, Value defaultValue)
         : name_(move(name)),
           valueName_(move(valueName)),
-          defaultValue_(move(defaultValue))
-    {
-    }
+          defaultValue_(move(defaultValue)) {}
 
     template <typename Functor>
-    void forEachName(Functor&& functor) const
-    {
+    void forEachName(Functor&& functor) const {
         name_.forEachName(forward<Functor>(functor));
     }
 
     bool anyMatch(const char* arg) const { return name_.anyMatch(arg); }
     const string& longName() const { return name_.longName(); }
-    string makeNamesString() const
-    {
+    string makeNamesString() const {
         return name_.makeNamesString() + " <" + valueName_ + ">";
     }
 
-    bool multiLineDescription(size_t width) const
-    {
+    bool multiLineDescription(size_t width) const {
         return name_.multiLineDescription(width);
     }
 
     void
-    showDescription(Out<ostream> output, size_t width, size_t padding) const
-    {
+    showDescription(Out<ostream> output, size_t width, size_t padding) const {
         name_.showDescription(output, width, padding);
     }
 
     optional<Value> defaultValue() const { return defaultValue_; }
 };
 
-class Flag final : public Name
-{
+class Flag final : public Name {
 public:
     using Name::Name;
 };
 
-enum class ParamType
-{
-    OPTION,
-    FLAG
-};
+enum class ParamType { OPTION, FLAG };
 
-class Arguments final : public NoCopy
-{
+class Arguments final : public NoCopy {
     Out<ostream> helpOut_;
     Out<ostream> errorOut_;
     string description_;
@@ -337,21 +287,18 @@ class Arguments final : public NoCopy
     string positionalDescription_;
     size_t terminalWidth_;
 
-    static const Flag& helpFlag()
-    {
+    static const Flag& helpFlag() {
         static const Flag instance{"help", "Display this help message."};
         return instance;
     }
 
-    static const Flag& versionFlag()
-    {
+    static const Flag& versionFlag() {
         static const Flag instance{"version", "Display version information."};
         return instance;
     }
 
     template <typename... Params>
-    void displayHelp(const char* exeName, Params&&... params)
-    {
+    void displayHelp(const char* exeName, Params&&... params) {
         *helpOut_ << "Usage: " << exeName << " [OPTION]...";
 
         if (!positionalDescription_.empty()) {
@@ -360,9 +307,7 @@ class Arguments final : public NoCopy
 
         *helpOut_ << "\n\n";
 
-        if (!description_.empty()) {
-            *helpOut_ << description_ << "\n\n";
-        }
+        if (!description_.empty()) { *helpOut_ << description_ << "\n\n"; }
 
         size_t padding = 0;
 
@@ -387,11 +332,8 @@ class Arguments final : public NoCopy
                 bool descriptionOnNewline =
                     nameString.size() + tabWidth > padding;
 
-                if (descriptionOnNewline) {
-                    *helpOut_ << "\n";
-                }
-                else
-                {
+                if (descriptionOnNewline) { *helpOut_ << "\n"; }
+                else {
                     currentPadding -= nameString.size();
                 }
 
@@ -401,8 +343,7 @@ class Arguments final : public NoCopy
                 arg.showDescription(helpOut_, descriptionWidth, padding);
 
                 if (descriptionOnNewline ||
-                    arg.multiLineDescription(descriptionWidth))
-                {
+                    arg.multiLineDescription(descriptionWidth)) {
                     *helpOut_ << "\n";
                 }
             },
@@ -412,9 +353,7 @@ class Arguments final : public NoCopy
 
         *helpOut_ << "\n";
 
-        if (!notes_.empty()) {
-            *helpOut_ << notes_ << "\n\n";
-        }
+        if (!notes_.empty()) { *helpOut_ << notes_ << "\n\n"; }
     }
 
     template <typename Functor>
@@ -422,8 +361,7 @@ class Arguments final : public NoCopy
         map<string, vector<string>>,
         vector<string> positionalArgs,
         set<string>,
-        Functor&& functor)
-    {
+        Functor&& functor) {
         return functor(move(positionalArgs));
     }
 
@@ -441,8 +379,7 @@ class Arguments final : public NoCopy
         set<string> setFlags,
         Functor&& functor,
         Option<Value>&& param,
-        ParamTail&&... paramTail)
-    {
+        ParamTail&&... paramTail) {
         vector<string> paramValues;
 
         param.forEachName([&](const string& name) {
@@ -454,18 +391,14 @@ class Arguments final : public NoCopy
         Value value;
 
         if (paramValues.empty()) {
-            if (param.defaultValue()) {
-                value = *param.defaultValue();
-            }
-            else
-            {
+            if (param.defaultValue()) { value = *param.defaultValue(); }
+            else {
                 *errorOut_ << "Error: No value for " + param.longName() << "\n";
 
                 return ExitStatus::CONFIG;
             }
         }
-        else
-        {
+        else {
             value = fromString<Value>(move(paramValues.front()));
         }
 
@@ -494,8 +427,7 @@ class Arguments final : public NoCopy
         set<string> setFlags,
         Functor&& functor,
         Option<vector<string>>&& param,
-        ParamTail&&... paramTail)
-    {
+        ParamTail&&... paramTail) {
         vector<string> paramValues;
 
         param.forEachName([&](const string& name) {
@@ -522,8 +454,7 @@ class Arguments final : public NoCopy
         set<string> setFlags,
         Functor&& functor,
         Flag&& flag,
-        ParamTail&&... paramTail)
-    {
+        ParamTail&&... paramTail) {
         bool flagValue = false;
 
         flag.forEachName(
@@ -545,8 +476,7 @@ class Arguments final : public NoCopy
         Out<set<string>> optionNames,
         Out<set<string>> allNames,
         const Option<OptionType>& option,
-        const ParamsTail&... paramsTail)
-    {
+        const ParamsTail&... paramsTail) {
         option.forEachName(
             [&](const string& name) { optionNames->emplace(name); });
 
@@ -558,8 +488,7 @@ class Arguments final : public NoCopy
         Out<set<string>> optionNames,
         Out<set<string>> allNames,
         const Flag&,
-        const ParamsTail&... paramsTail)
-    {
+        const ParamsTail&... paramsTail) {
         readNames(optionNames, allNames, paramsTail...);
     }
 
@@ -569,8 +498,7 @@ class Arguments final : public NoCopy
         Out<set<string>> optionNames,
         Out<set<string>> allNames,
         const ParamType& param,
-        const ParamsTail&... paramsTail)
-    {
+        const ParamsTail&... paramsTail) {
         param.forEachName([&](const string& name) {
             if (!allNames->emplace(name).second) {
                 throw logic_error("Duplicate name " + name);
@@ -580,30 +508,19 @@ class Arguments final : public NoCopy
         readNamesImpl(optionNames, allNames, param, paramsTail...);
     }
 
-    enum class StandardArg
-    {
-        NONE,
-        HELP,
-        VERSION
-    };
+    enum class StandardArg { NONE, HELP, VERSION };
 
-    StandardArg checkArgs(int argc, const char* const argv[])
-    {
-        if (argc <= 0) {
-            throw runtime_error("argc is 0.");
-        }
-        else if (argv == nullptr)
-        {
+    StandardArg checkArgs(int argc, const char* const argv[]) {
+        if (argc <= 0) { throw runtime_error("argc is 0."); }
+        else if (argv == nullptr) {
             throw runtime_error("argv is null.");
         }
-        else
-        {
+        else {
             for (int index = 0; index < argc; ++index) {
                 if (argv[index] == nullptr) {
                     throw runtime_error("argv has null value.");
                 }
-                else
-                {
+                else {
                     if (helpFlag().anyMatch(argv[index])) {
                         return StandardArg::HELP;
                     }
@@ -623,8 +540,7 @@ class Arguments final : public NoCopy
         int argc,
         const char* const argv[],
         Functor&& functor,
-        Params&&... params)
-    {
+        Params&&... params) {
         auto standardArg = checkArgs(argc, argv);
 
         if (standardArg == StandardArg::HELP) {
@@ -674,13 +590,11 @@ class Arguments final : public NoCopy
 
                     optionValues[currentArg].emplace_back(argv[index]);
                 }
-                else
-                {
+                else {
                     setFlags.emplace(currentArg);
                 }
             }
-            else
-            {
+            else {
                 positionalArgs.emplace_back(currentArg);
             }
         }
@@ -693,11 +607,8 @@ class Arguments final : public NoCopy
             forward<Params>(params)...);
     }
 
-    const char* exeName(int argc, const char* const argv[])
-    {
-        if (argv && argc > 0 && argv[0]) {
-            return argv[0];
-        }
+    const char* exeName(int argc, const char* const argv[]) {
+        if (argv && argc > 0 && argv[0]) { return argv[0]; }
 
         return "unknown";
     }
@@ -711,34 +622,26 @@ public:
         : helpOut_(helpOut),
           errorOut_(errorOut),
           version_(move(version)),
-          terminalWidth_(terminalWidth)
-    {
-    }
+          terminalWidth_(terminalWidth) {}
 
-    void setDescription(string description)
-    {
+    void setDescription(string description) {
         description_ = move(description);
     }
     void setNotes(string notes) { notes_ = move(notes); }
-    void setPositionalDescription(string positionalDescription)
-    {
+    void setPositionalDescription(string positionalDescription) {
         positionalDescription_ = move(positionalDescription);
     }
 
     Arguments(string version, size_t terminalWidth = 80)
-        : Arguments(out(cout), out(cerr), move(version), terminalWidth)
-    {
-    }
+        : Arguments(out(cout), out(cerr), move(version), terminalWidth) {}
 
     template <typename Functor, typename... Params>
     int
     run(int argc,
         const char* const argv[],
         Functor&& functor,
-        Params&&... params)
-    {
-        try
-        {
+        Params&&... params) {
+        try {
             return static_cast<int>(
                 runImpl(
                     argc,
@@ -746,8 +649,7 @@ public:
                     forward<Functor>(functor),
                     forward<Params>(params)...));
         }
-        catch (const exception& e)
-        {
+        catch (const exception& e) {
             *errorOut_ << exeName(argc, argv) << ": " << e.what() << "\n";
         }
 
@@ -759,10 +661,8 @@ public:
 }
 }
 
-namespace Enhedron
-{
-namespace CommandLine
-{
+namespace Enhedron {
+namespace CommandLine {
 using Impl::Impl_Parameters::ExitStatus;
 using Impl::Impl_Parameters::Arguments;
 using Impl::Impl_Parameters::Option;

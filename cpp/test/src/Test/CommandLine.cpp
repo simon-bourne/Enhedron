@@ -14,10 +14,8 @@
 #include <string>
 #include <vector>
 
-namespace Enhedron
-{
-namespace Impl_TestCommandLine
-{
+namespace Enhedron {
+namespace Impl_TestCommandLine {
 using namespace CommandLine;
 using namespace Test;
 
@@ -32,8 +30,7 @@ void testEmpty(
     vector<const char*> args,
     ExitStatus exitStatus,
     const char* expectedOutput,
-    const char* expectedErrorOutput)
-{
+    const char* expectedErrorOutput) {
     ostringstream helpOut;
     ostringstream errorOut;
 

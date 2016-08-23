@@ -10,7 +10,6 @@
 #include "Log/DefaultWriter.h"
 #include "Log/Logger.h"
 
-namespace Enhedron
-{
+namespace Enhedron {
 using Logger = Log::ConfigurableLogger<Log::DefaultWriter>;
 }

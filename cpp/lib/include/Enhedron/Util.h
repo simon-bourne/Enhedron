@@ -11,20 +11,16 @@
 #include <memory>
 #include <type_traits>
 
-namespace Enhedron
-{
-namespace Impl
-{
-namespace Util
-{
+namespace Enhedron {
+namespace Impl {
+namespace Util {
 using std::enable_if;
 using std::is_base_of;
 using std::move;
 using std::make_unique;
 using std::unique_ptr;
 
-class NoCopy
-{
+class NoCopy {
 public:
     NoCopy() = default;
 
@@ -35,8 +31,7 @@ public:
     NoCopy& operator=(const NoCopy&) = delete;
 };
 
-class NoCopyMove : public NoCopy
-{
+class NoCopyMove : public NoCopy {
 public:
     NoCopyMove() = default;
 
@@ -45,15 +40,12 @@ public:
 };
 
 template <typename ValueType>
-class Out final
-{
+class Out final {
 public:
     constexpr Out(const Out<ValueType>&) = default;
 
     template <typename Super>
-    constexpr Out(Out<Super> value) : value(value.value)
-    {
-    }
+    constexpr Out(Out<Super> value) : value(value.value) {}
 
     constexpr explicit Out(ValueType& value) : value(&value) {}
     ValueType& get() { return *value; }
@@ -62,6 +54,7 @@ public:
     constexpr const ValueType& operator*() const { return *value; }
     ValueType* operator->() { return value; }
     constexpr const ValueType* operator->() const { return value; }
+
 private:
     template <typename Super>
     friend class Out;
@@ -70,29 +63,23 @@ private:
 };
 
 template <typename ValueType>
-Out<ValueType> out(ValueType& value)
-{
+Out<ValueType> out(ValueType& value) {
     return Out<ValueType>(value);
 }
 
 template <typename... Value>
-void unused(const Value&...)
-{
-}
+void unused(const Value&...) {}
 
-class Finally final : public NoCopy
-{
+class Finally final : public NoCopy {
     // std::function requires the functor to be copyable (because it's
     // copyable).
-    struct BaseFunctor
-    {
+    struct BaseFunctor {
         virtual ~BaseFunctor() {}
         virtual void operator()() = 0;
     };
 
     template <typename Functor>
-    class DerivedFunctor final : public BaseFunctor
-    {
+    class DerivedFunctor final : public BaseFunctor {
         Functor f;
 
     public:
@@ -107,18 +94,14 @@ class Finally final : public NoCopy
 public:
     template <typename Functor>
     Finally(Functor functor)
-        : functor(make_unique<DerivedFunctor<Functor>>(move(functor)))
-    {
-    }
+        : functor(make_unique<DerivedFunctor<Functor>>(move(functor))) {}
 
     Finally(Finally&& source)
-        : functor(move(source.functor)), valid(source.valid)
-    {
+        : functor(move(source.functor)), valid(source.valid) {
         source.valid = false;
     }
 
-    Finally& operator=(Finally&& source)
-    {
+    Finally& operator=(Finally&& source) {
         functor = move(source.functor);
         valid = move(source.valid);
         source.valid = false;
@@ -127,23 +110,18 @@ public:
     }
 
     ~Finally() { close(); }
-    void close()
-    {
-        if (valid) {
-            (*functor)();
-        }
+    void close() {
+        if (valid) { (*functor)(); }
 
         valid = false;
     }
 
     template <typename Object>
-    static Finally wrap(Object object)
-    {
+    static Finally wrap(Object object) {
         return Finally([object(move(object))]{});
     }
 
-    static Finally empty()
-    {
+    static Finally empty() {
         return Finally([] {});
     }
 };
@@ -151,8 +129,7 @@ public:
 }
 }
 
-namespace Enhedron
-{
+namespace Enhedron {
 using Impl::Util::NoCopy;
 using Impl::Util::NoCopyMove;
 using Impl::Util::Out;

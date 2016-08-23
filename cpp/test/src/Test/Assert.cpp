@@ -16,8 +16,7 @@
 #include <utility>
 #include <vector>
 
-namespace Enhedron
-{
+namespace Enhedron {
 using Test::context;
 using Test::given;
 using Test::Check;
@@ -38,11 +37,9 @@ using Util::optional;
 
 using namespace Assertion;
 
-class RecordFailures final : public FailureHandler
-{
+class RecordFailures final : public FailureHandler {
 public:
-    struct Failure
-    {
+    struct Failure {
         string expressionText;
         vector<Variable> variableList;
     };
@@ -54,18 +51,13 @@ public:
     virtual ~RecordFailures() override {}
     virtual bool notifyPassing() const override { return false; }
     virtual void
-    pass(optional<string>, const string&, const vector<Variable>&) override
-    {
-    }
+    pass(optional<string>, const string&, const vector<Variable>&) override {}
 
     virtual void fail(
         optional<string>,
         const string& expressionText,
-        const vector<Variable>& variableList) override
-    {
-        if (failure_) {
-            throw runtime_error("Multiple failures");
-        }
+        const vector<Variable>& variableList) override {
+        if (failure_) { throw runtime_error("Multiple failures"); }
 
         failure_ = Failure{expressionText, variableList};
     }
@@ -79,26 +71,22 @@ template <typename Exception,
 void testAssertThrows(
     Out<FailureHandler> failureHandler,
     Expression&& expression,
-    ContextVariableList&&... contextVariableList)
-{
+    ContextVariableList&&... contextVariableList) {
     CheckThrowsWithFailureHandler<Exception>(
         failureHandler, move(expression), move(contextVariableList)...);
 }
 
-class MoveTracker final : public NoCopy
-{
+class MoveTracker final : public NoCopy {
 public:
     MoveTracker() = default;
     MoveTracker(const MoveTracker&) = default;
     MoveTracker& operator=(const MoveTracker&) = default;
 
-    MoveTracker(MoveTracker&& source) : moved_(source.moved_)
-    {
+    MoveTracker(MoveTracker&& source) : moved_(source.moved_) {
         source.moved_ = true;
     }
 
-    MoveTracker& operator=(MoveTracker&& source)
-    {
+    MoveTracker& operator=(MoveTracker&& source) {
         moved_ = source.moved_;
         source.moved_ = true;
 
@@ -106,6 +94,7 @@ public:
     }
 
     bool moved() const { return moved_; }
+
 private:
     bool moved_ = false;
 };
@@ -114,12 +103,10 @@ template <typename Expression>
 void expectFailure(
     Check& check,
     Expression expression,
-    const char* expressionText = nullptr)
-{
+    const char* expressionText = nullptr) {
     RecordFailures recordFailures;
 
-    try
-    {
+    try {
         CheckWithFailureHandler(out(recordFailures), move(expression));
         auto& failure = recordFailures.failure();
 
@@ -127,15 +114,13 @@ void expectFailure(
             check(VAR(failure->expressionText) == expressionText);
         }
     }
-    catch (const exception& e)
-    {
+    catch (const exception& e) {
         check.fail(VAR(e.what()));
     }
 }
 
 template <typename Operator, typename Value>
-void testBooleanOperator(Check& check, Value lhs, Value rhs)
-{
+void testBooleanOperator(Check& check, Value lhs, Value rhs) {
     Operator op;
     bool result = op(lhs, rhs);
 
@@ -144,8 +129,7 @@ void testBooleanOperator(Check& check, Value lhs, Value rhs)
         check(op(lhs, VAR(rhs)));
         check(op(VAR(lhs), rhs));
     }
-    else
-    {
+    else {
         expectFailure(check, op(VAR(lhs), VAR(rhs)));
         expectFailure(check, op(lhs, VAR(rhs)));
         expectFailure(check, op(VAR(lhs), rhs));
@@ -153,8 +137,7 @@ void testBooleanOperator(Check& check, Value lhs, Value rhs)
 }
 
 template <typename Operator>
-void testBooleanOperator(Check& check)
-{
+void testBooleanOperator(Check& check) {
     testBooleanOperator<Operator>(check, false, false);
     testBooleanOperator<Operator>(check, false, true);
     testBooleanOperator<Operator>(check, true, false);
@@ -162,8 +145,7 @@ void testBooleanOperator(Check& check)
 }
 
 template <typename Operator, typename Value>
-void testOperator(Check& check, Value lhs, Value rhs)
-{
+void testOperator(Check& check, Value lhs, Value rhs) {
     Operator op;
     auto result = op(lhs, rhs);
 
@@ -173,26 +155,18 @@ void testOperator(Check& check, Value lhs, Value rhs)
 }
 
 template <typename Operator>
-void testNumericOperator(Check& check)
-{
+void testNumericOperator(Check& check) {
     for (int i = -10; i < 10; ++i) {
-        for (int j = -10; j < 10; ++j) {
-            testOperator<Operator>(check, i, j);
-        }
+        for (int j = -10; j < 10; ++j) { testOperator<Operator>(check, i, j); }
     }
 }
 
 template <typename Operator>
-void testNonZeroDenominator(Check& check)
-{
+void testNonZeroDenominator(Check& check) {
     for (int i = -10; i < 10; ++i) {
-        for (int j = -10; j < -1; ++j) {
-            testOperator<Operator>(check, i, j);
-        }
+        for (int j = -10; j < -1; ++j) { testOperator<Operator>(check, i, j); }
 
-        for (int j = 1; j < 10; ++j) {
-            testOperator<Operator>(check, i, j);
-        }
+        for (int j = 1; j < 10; ++j) { testOperator<Operator>(check, i, j); }
     }
 }
 
@@ -200,12 +174,10 @@ template <typename Exception, typename Expression>
 void expectException(
     Check& check,
     Expression expression,
-    const char* expressionText)
-{
+    const char* expressionText) {
     RecordFailures recordFailures;
 
-    try
-    {
+    try {
         testAssertThrows<Exception>(out(recordFailures), move(expression));
         auto& failure = recordFailures.failure();
 
@@ -213,8 +185,7 @@ void expectException(
             check(VAR(failure->expressionText) == expressionText);
         }
     }
-    catch (const exception& e)
-    {
+    catch (const exception& e) {
         check.fail(VAR(e.what()));
     }
 }
@@ -223,8 +194,7 @@ int sum3(int x, int y, int z) { return x + y + z; }
 int overloaded(int x) { return x; }
 double overloaded(double x) { return x + 1.0; }
 template <typename... Args>
-auto overloadedProxy(Args&&... args)
-{
+auto overloadedProxy(Args&&... args) {
     return makeFunction("overloaded", [](auto&&... args) {
         return overloaded(forward<decltype(args)>(args)...);
     })(forward<Args>(args)...);

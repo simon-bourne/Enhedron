@@ -30,13 +30,10 @@
 #include <unordered_set>
 #include <vector>
 
-namespace Enhedron
-{
-namespace Assertion
-{
+namespace Enhedron {
+namespace Assertion {
 template <typename T>
-class HasOutputOperator
-{
+class HasOutputOperator {
     template <typename U,
               typename = decltype(
                   std::declval<std::ostream&>() << std::declval<const U&>())>
@@ -50,99 +47,62 @@ public:
 };
 
 template <typename CONTAINER>
-class IsStlContainer
-{
+class IsStlContainer {
     using True = std::integral_constant<bool, true>;
     template <typename U>
-    struct test : std::false_type
-    {
-    };
+    struct test : std::false_type {};
 
     template <typename Value, std::size_t N>
-    struct test<std::array<Value, N>> : True
-    {
-    };
+    struct test<std::array<Value, N>> : True {};
 
     // MSVC doesn't like the parameter packs for these. Suspect it just doesn't
     // like the
     // parameter packs for any container and is just using the defaults for
     // allocators.
     template <typename K, typename T, typename C, typename A>
-    struct test<std::map<K, T, C, A>> : True
-    {
-    };
+    struct test<std::map<K, T, C, A>> : True {};
 
     template <typename K, typename T, typename C, typename A>
-    struct test<std::multimap<K, T, C, A>> : True
-    {
-    };
+    struct test<std::multimap<K, T, C, A>> : True {};
 
     template <typename K, typename T, typename H, typename P, typename A>
-    struct test<std::unordered_map<K, T, H, P, A>> : True
-    {
-    };
+    struct test<std::unordered_map<K, T, H, P, A>> : True {};
 
     template <typename K, typename T, typename H, typename P, typename A>
-    struct test<std::unordered_multimap<K, T, H, P, A>> : True
-    {
-    };
+    struct test<std::unordered_multimap<K, T, H, P, A>> : True {};
 
     template <typename... Args>
-    struct test<std::deque<Args...>> : True
-    {
-    };
+    struct test<std::deque<Args...>> : True {};
     template <typename... Args>
-    struct test<std::forward_list<Args...>> : True
-    {
-    };
+    struct test<std::forward_list<Args...>> : True {};
     template <typename... Args>
-    struct test<std::list<Args...>> : True
-    {
-    };
+    struct test<std::list<Args...>> : True {};
     template <typename... Args>
-    struct test<std::multiset<Args...>> : True
-    {
-    };
+    struct test<std::multiset<Args...>> : True {};
     template <typename... Args>
-    struct test<std::priority_queue<Args...>> : True
-    {
-    };
+    struct test<std::priority_queue<Args...>> : True {};
     template <typename... Args>
-    struct test<std::queue<Args...>> : True
-    {
-    };
+    struct test<std::queue<Args...>> : True {};
     template <typename... Args>
-    struct test<std::set<Args...>> : True
-    {
-    };
+    struct test<std::set<Args...>> : True {};
     template <typename... Args>
-    struct test<std::stack<Args...>> : True
-    {
-    };
+    struct test<std::stack<Args...>> : True {};
     template <typename... Args>
-    struct test<std::unordered_set<Args...>> : True
-    {
-    };
+    struct test<std::unordered_set<Args...>> : True {};
     template <typename... Args>
-    struct test<std::unordered_multiset<Args...>> : True
-    {
-    };
+    struct test<std::unordered_multiset<Args...>> : True {};
     template <typename... Args>
-    struct test<std::vector<Args...>> : True
-    {
-    };
+    struct test<std::vector<Args...>> : True {};
 
 public:
     static constexpr bool value = test<std::decay_t<CONTAINER>>::value;
 };
 
 template <typename Value, typename Enable = void>
-struct Convert
-{
+struct Convert {
     template <typename T = Value,
               std::enable_if_t<HasOutputOperator<T>::value>* = nullptr>
-    static std::string toString(const Value& value)
-    {
+    static std::string toString(const Value& value) {
         std::ostringstream valueString;
         valueString << value;
 
@@ -151,35 +111,28 @@ struct Convert
 
     template <typename T = Value,
               std::enable_if_t<!HasOutputOperator<T>::value>* = nullptr>
-    static std::string toString(const Value&)
-    {
+    static std::string toString(const Value&) {
         return "<unknown>";
     }
 };
 
 template <>
-struct Convert<std::nullptr_t>
-{
-    static inline std::string toString(const std::nullptr_t&)
-    {
+struct Convert<std::nullptr_t> {
+    static inline std::string toString(const std::nullptr_t&) {
         return "nullptr";
     }
 };
 
 template <>
-struct Convert<bool>
-{
-    static inline std::string toString(bool value)
-    {
+struct Convert<bool> {
+    static inline std::string toString(bool value) {
         return value ? "true" : "false";
     }
 };
 
 template <>
-struct Convert<std::string>
-{
-    static inline std::string toString(const std::string& s)
-    {
+struct Convert<std::string> {
+    static inline std::string toString(const std::string& s) {
         return "\"" + s + "\"";
     }
 };
@@ -187,10 +140,8 @@ struct Convert<std::string>
 template <typename Value>
 struct Convert<
     Value,
-    std::enable_if_t<std::is_same<std::decay_t<Value>, char*>::value>>
-{
-    static inline std::string toString(const char* s)
-    {
+    std::enable_if_t<std::is_same<std::decay_t<Value>, char*>::value>> {
+    static inline std::string toString(const char* s) {
         return "\"" + std::string(s) + "\"";
     }
 };
@@ -198,10 +149,8 @@ struct Convert<
 template <typename Value>
 struct Convert<
     Value,
-    std::enable_if_t<std::is_enum<std::remove_reference_t<Value>>::value>>
-{
-    static std::string toString(Value value)
-    {
+    std::enable_if_t<std::is_enum<std::remove_reference_t<Value>>::value>> {
+    static std::string toString(Value value) {
         std::ostringstream valueString;
         valueString << static_cast<
             std::underlying_type_t<std::remove_reference_t<Value>>>(value);
@@ -213,23 +162,18 @@ struct Convert<
 template <typename Value>
 struct Convert<
     Value,
-    std::enable_if_t<std::is_function<std::remove_reference_t<Value>>::value>>
-{
+    std::enable_if_t<std::is_function<std::remove_reference_t<Value>>::value>> {
     static std::string toString(Value) { return "<function>"; }
 };
 
 template <typename Container>
-struct Convert<Container, std::enable_if_t<IsStlContainer<Container>::value>>
-{
-    static inline std::string toString(const Container& value)
-    {
+struct Convert<Container, std::enable_if_t<IsStlContainer<Container>::value>> {
+    static inline std::string toString(const Container& value) {
         std::string result("[");
         bool isFirst = true;
 
         for (const auto& element : value) {
-            if (!isFirst) {
-                result += ", ";
-            }
+            if (!isFirst) { result += ", "; }
 
             isFirst = false;
             result +=
@@ -244,14 +188,10 @@ struct Convert<Container, std::enable_if_t<IsStlContainer<Container>::value>>
 }
 }
 
-namespace Enhedron
-{
-namespace Assertion
-{
-namespace Impl
-{
-namespace Configurable
-{
+namespace Enhedron {
+namespace Assertion {
+namespace Impl {
+namespace Configurable {
 using Util::StoreArgs;
 using Util::mapParameterPack;
 using Util::extractParameterPack;
@@ -284,9 +224,7 @@ using std::ref;
 using std::cref;
 using std::is_function;
 
-class Expression
-{
-};
+class Expression {};
 
 template <typename Arg>
 using IsExpression = enable_if_t<is_base_of<Expression, Arg>::value>*;
@@ -298,21 +236,19 @@ template <typename Lhs, typename Rhs>
 using EitherIsExpression = enable_if_t<is_base_of<Expression, Lhs>::value ||
                                        is_base_of<Expression, Rhs>::value>*;
 
-class Variable final
-{
+class Variable final {
 public:
     Variable(string name, string value, string file, int line)
         : name_(move(name)),
           value_(move(value)),
           file_(move(file)),
-          line_(move(line))
-    {
-    }
+          line_(move(line)) {}
 
     const string& name() const { return name_; }
     const string& value() const { return value_; }
     const string& file() const { return file_; }
     int line() const { return line_; }
+
 private:
     string name_;
     string value_;
@@ -321,8 +257,7 @@ private:
 };
 
 template <typename Value>
-class Literal final : public Expression
-{
+class Literal final : public Expression {
 public:
     using ResultType = DecayArrayAndFunction_t<Value>;
 
@@ -330,36 +265,33 @@ public:
     string makeName() const { return Convert<Value>::toString(value); }
     void appendVariables(vector<Variable>&) const {}
     const Value& evaluate() { return value; }
+
 private:
     const Value& value;
 };
 
 template <typename Functor, typename Arg>
-class UnaryOperator final : public Expression
-{
+class UnaryOperator final : public Expression {
 public:
     using ResultType =
         DecayArrayAndFunction_t<result_of_t<Functor(typename Arg::ResultType)>>;
 
     explicit UnaryOperator(const char* operatorName, Functor functor, Arg arg)
-        : operatorName(operatorName), functor(move(functor)), arg(move(arg))
-    {
-    }
+        : operatorName(operatorName), functor(move(functor)), arg(move(arg)) {}
 
-    string makeName() const
-    {
+    string makeName() const {
         ostringstream valueString;
         valueString << "( " << operatorName << " " << arg.makeName() << ")";
 
         return valueString.str();
     }
 
-    void appendVariables(vector<Variable>& variableList) const
-    {
+    void appendVariables(vector<Variable>& variableList) const {
         arg.appendVariables(variableList);
     }
 
     ResultType evaluate() { return functor(arg.evaluate()); }
+
 private:
     const char* operatorName;
     Functor functor;
@@ -367,8 +299,7 @@ private:
 };
 
 template <typename Functor, typename Lhs, typename Rhs>
-class BinaryOperator final : public Expression
-{
+class BinaryOperator final : public Expression {
 public:
     using ResultType = DecayArrayAndFunction_t<result_of_t<
         Functor(typename Lhs::ResultType, typename Rhs::ResultType)>>;
@@ -381,12 +312,9 @@ public:
         : operatorName(operatorName),
           functor(move(functor)),
           lhs(move(lhs)),
-          rhs(move(rhs))
-    {
-    }
+          rhs(move(rhs)) {}
 
-    string makeName() const
-    {
+    string makeName() const {
         ostringstream valueString;
         valueString << "(" << lhs.makeName() << " " << operatorName << " "
                     << rhs.makeName() << ")";
@@ -394,13 +322,13 @@ public:
         return valueString.str();
     }
 
-    void appendVariables(vector<Variable>& variableList) const
-    {
+    void appendVariables(vector<Variable>& variableList) const {
         lhs.appendVariables(variableList);
         rhs.appendVariables(variableList);
     }
 
     ResultType evaluate() { return functor(lhs.evaluate(), rhs.evaluate()); }
+
 private:
     const char* operatorName;
     Functor functor;
@@ -409,16 +337,14 @@ private:
 };
 
 template <typename T, typename Enable = void>
-struct DecayExpression
-{
+struct DecayExpression {
     using type = T;
 };
 
 template <typename T>
 struct DecayExpression<
     T,
-    enable_if_t<is_base_of<Expression, remove_reference_t<T>>::value>>
-{
+    enable_if_t<is_base_of<Expression, remove_reference_t<T>>::value>> {
     using type = typename T::ResultType;
 };
 
@@ -426,8 +352,7 @@ template <typename T>
 using DecayExpression_t = typename DecayExpression<T>::type;
 
 template <typename Functor, typename... Args>
-class FunctionValue final : public Expression
-{
+class FunctionValue final : public Expression {
 public:
     using ResultType = DecayArrayAndFunction_t<
         result_of_t<Functor&(DecayExpression_t<Args>...)>>;
@@ -441,17 +366,14 @@ public:
         : name(move(name)),
           functor(move(functor)),
           fileAndLine(FileLine{file, line}),
-          args(forward<Args>(args)...)
-    {
-    }
+          args(forward<Args>(args)...) {}
 
     explicit FunctionValue(string name, Functor&& functor, Args&&... args)
-        : name(move(name)), functor(move(functor)), args(forward<Args>(args)...)
-    {
-    }
+        : name(move(name)),
+          functor(move(functor)),
+          args(forward<Args>(args)...) {}
 
-    string makeName() const
-    {
+    string makeName() const {
         ostringstream valueString;
         valueString << name << "(";
         extractParameterPack(
@@ -468,8 +390,7 @@ public:
         return valueString.str();
     }
 
-    void appendVariables(vector<Variable>& variableList) const
-    {
+    void appendVariables(vector<Variable>& variableList) const {
         if (fileAndLine) {
             variableList.emplace_back(
                 name, "function", fileAndLine->file, fileAndLine->line);
@@ -482,8 +403,7 @@ public:
             args);
     }
 
-    ResultType evaluate()
-    {
+    ResultType evaluate() {
         return extractParameterPack(
             [this](Args&&... extractedArgs) {
                 return functor(
@@ -492,8 +412,7 @@ public:
             move(args));
     }
 
-    void setException(const exception& e)
-    {
+    void setException(const exception& e) {
         exceptionMessage = optional<string>(e.what());
     }
 
@@ -503,40 +422,35 @@ private:
         Out<ostringstream> parameters,
         const Arg1& arg1,
         const Arg2& arg2,
-        const Tail&... tail) const
-    {
+        const Tail&... tail) const {
         (*parameters) << getParameterName(arg1) << ", ";
         makeParameterNames(parameters, arg2, tail...);
     }
 
     template <typename Arg>
-    void makeParameterNames(Out<ostringstream> parameters, const Arg& arg) const
-    {
+    void
+    makeParameterNames(Out<ostringstream> parameters, const Arg& arg) const {
         (*parameters) << getParameterName(arg);
     }
 
     void makeParameterNames(Out<ostringstream>) const {}
     template <typename Arg, IsExpression<Arg> = nullptr>
-    string getParameterName(const Arg& arg) const
-    {
+    string getParameterName(const Arg& arg) const {
         return arg.makeName();
     }
 
     template <typename Arg, IsNotExpression<Arg> = nullptr>
-    string getParameterName(const Arg& arg) const
-    {
+    string getParameterName(const Arg& arg) const {
         return Convert<Arg>::toString(arg);
     }
 
     template <typename Arg, IsExpression<Arg> = nullptr>
-    auto getParameterValue(Arg&& arg)
-    {
+    auto getParameterValue(Arg&& arg) {
         return arg.evaluate();
     }
 
     template <typename Arg, IsNotExpression<Arg> = nullptr>
-    auto getParameterValue(Arg&& arg)
-    {
+    auto getParameterValue(Arg&& arg) {
         return arg;
     }
 
@@ -544,8 +458,7 @@ private:
     void appendParameterVariableList(
         vector<Variable>& variableList,
         const HeadArg& arg,
-        const TailArgs&... tailArgs) const
-    {
+        const TailArgs&... tailArgs) const {
         appendParameterVariable(variableList, arg);
         appendParameterVariableList(variableList, tailArgs...);
     }
@@ -553,21 +466,17 @@ private:
     void appendParameterVariableList(vector<Variable>&) const {}
     template <typename Arg, IsExpression<Arg> = nullptr>
     void appendParameterVariable(vector<Variable>& variableList, const Arg& arg)
-        const
-    {
+        const {
         return arg.appendVariables(variableList);
     }
 
     template <typename Arg, IsNotExpression<Arg> = nullptr>
-    void appendParameterVariable(vector<Variable>&, const Arg&) const
-    {
-    }
+    void appendParameterVariable(vector<Variable>&, const Arg&) const {}
 
     string name;
     Functor functor;
 
-    struct FileLine
-    {
+    struct FileLine {
         const char* file;
         int line;
     };
@@ -578,34 +487,28 @@ private:
 };
 
 template <typename Functor>
-class Function final
-{
+class Function final {
     string name_;
     Functor functor_;
 
 public:
     Function(string name, Functor&& functor)
-        : name_(move(name)), functor_(functor)
-    {
-    }
+        : name_(move(name)), functor_(functor) {}
 
     template <typename... Args>
-    auto operator()(Args&&... args)
-    {
+    auto operator()(Args&&... args) {
         return FunctionValue<Functor, Args...>(
             name_, Functor(functor_), forward<Args>(args)...);
     }
 };
 
 template <typename Functor>
-auto makeFunction(string name, Functor&& functor)
-{
+auto makeFunction(string name, Functor&& functor) {
     return Function<Functor>(move(name), forward<Functor>(functor));
 }
 
 template <typename Value>
-class VariableRefExpression final : public Expression
-{
+class VariableRefExpression final : public Expression {
 public:
     using ResultType = DecayArrayAndFunction_t<Value>;
 
@@ -614,21 +517,17 @@ public:
         Value& value,
         const char* file,
         int line)
-        : variableName(variableName), value(value), file(file), line(line)
-    {
-    }
+        : variableName(variableName), value(value), file(file), line(line) {}
 
     string makeName() const { return variableName; }
-    void appendVariables(vector<Variable>& variableList) const
-    {
+    void appendVariables(vector<Variable>& variableList) const {
         variableList.emplace_back(
             variableName, Convert<Value>::toString(value), file, line);
     }
 
     ResultType evaluate() { return value; }
     template <typename... Args>
-    auto operator()(Args&&... args)
-    {
+    auto operator()(Args&&... args) {
         return FunctionValue<reference_wrapper<Value>, Args...>(
             variableName, cref(value), file, line, forward<Args>(args)...);
     }
@@ -641,8 +540,7 @@ private:
 };
 
 template <typename Value>
-class VariableValueExpression final : public Expression
-{
+class VariableValueExpression final : public Expression {
 public:
     using ResultType = DecayArrayAndFunction_t<Value>;
 
@@ -651,13 +549,13 @@ public:
         Value&& value,
         const char* file,
         int line)
-        : variableName(variableName), value(move(value)), file(file), line(line)
-    {
-    }
+        : variableName(variableName),
+          value(move(value)),
+          file(file),
+          line(line) {}
 
     string makeName() const { return variableName; }
-    void appendVariables(vector<Variable>& variableList) const
-    {
+    void appendVariables(vector<Variable>& variableList) const {
         variableList.emplace_back(
             variableName, Convert<Value>::toString(value), file, line);
     }
@@ -665,8 +563,7 @@ public:
     ResultType evaluate() { return value; }
     // Only call this once! It will move the underlying value.
     template <typename... Args>
-    FunctionValue<Value, Args...> operator()(Args&&... args)
-    {
+    FunctionValue<Value, Args...> operator()(Args&&... args) {
         return FunctionValue<Value, Args...>(
             variableName, move(value), file, line, forward<Args>(args)...);
     }
@@ -679,21 +576,18 @@ private:
 };
 
 template <typename Value>
-auto makeVariable(const char* name, Value& value, const char* file, int line)
-{
+auto makeVariable(const char* name, Value& value, const char* file, int line) {
     return VariableRefExpression<Value>(name, value, file, line);
 }
 
 template <typename Value, enable_if_t<is_function<Value>::value>* = nullptr>
-auto makeVariable(const char* name, Value&& value, const char* file, int line)
-{
+auto makeVariable(const char* name, Value&& value, const char* file, int line) {
     return VariableValueExpression<reference_wrapper<Value>>(
         name, ref(value), file, line);
 }
 
 template <typename Value, enable_if_t<!is_function<Value>::value>* = nullptr>
-auto makeVariable(const char* name, Value&& value, const char* file, int line)
-{
+auto makeVariable(const char* name, Value&& value, const char* file, int line) {
     return VariableValueExpression<Value>(name, move(value), file, line);
 }
 
@@ -705,8 +599,7 @@ auto apply(
     const char* operationName,
     Operation operation,
     const Lhs& lhs,
-    const Rhs& rhs)
-{
+    const Rhs& rhs) {
     return BinaryOperator<Operation, Lhs, Rhs>(
         operationName, move(operation), lhs, rhs);
 }
@@ -719,8 +612,7 @@ auto apply(
     const char* operationName,
     Operation operation,
     const Lhs& lhs,
-    const Rhs& rhs)
-{
+    const Rhs& rhs) {
     return apply(operationName, move(operation), lhs, Literal<Rhs>(rhs));
 }
 
@@ -732,46 +624,39 @@ auto apply(
     const char* operationName,
     Operation operation,
     const Lhs& lhs,
-    const Rhs& rhs)
-{
+    const Rhs& rhs) {
     return apply(operationName, move(operation), Literal<Lhs>(lhs), rhs);
 }
 
 template <typename Operation, typename Arg, IsExpression<Arg> = nullptr>
-auto apply(const char* operationName, Operation operation, const Arg& arg)
-{
+auto apply(const char* operationName, Operation operation, const Arg& arg) {
     return UnaryOperator<Operation, Arg>(operationName, move(operation), arg);
 }
 
 // Unary operators
 template <typename Arg, IsExpression<Arg> = nullptr>
-auto operator!(const Arg& arg)
-{
+auto operator!(const Arg& arg) {
     return apply("!", [](const auto& arg) { return !arg; }, arg);
 }
 
 template <typename Arg, IsExpression<Arg> = nullptr>
-auto operator~(const Arg& arg)
-{
+auto operator~(const Arg& arg) {
     return apply("~", [](const auto& arg) { return ~arg; }, arg);
 }
 
 template <typename Arg, IsExpression<Arg> = nullptr>
-auto operator+(const Arg& arg)
-{
+auto operator+(const Arg& arg) {
     return apply("+", [](const auto& arg) { return +arg; }, arg);
 }
 
 template <typename Arg, IsExpression<Arg> = nullptr>
-auto operator-(const Arg& arg)
-{
+auto operator-(const Arg& arg) {
     return apply("-", [](const auto& arg) { return -arg; }, arg);
 }
 
 // Binary operators
 template <typename Lhs, typename Rhs, EitherIsExpression<Lhs, Rhs> = nullptr>
-auto operator==(const Lhs& lhs, const Rhs& rhs)
-{
+auto operator==(const Lhs& lhs, const Rhs& rhs) {
     return apply(
         "==",
         [](const auto& lhs, const auto& rhs) { return lhs == rhs; },
@@ -780,8 +665,7 @@ auto operator==(const Lhs& lhs, const Rhs& rhs)
 }
 
 template <typename Lhs, typename Rhs, EitherIsExpression<Lhs, Rhs> = nullptr>
-auto operator!=(const Lhs& lhs, const Rhs& rhs)
-{
+auto operator!=(const Lhs& lhs, const Rhs& rhs) {
     return apply(
         "!=",
         [](const auto& lhs, const auto& rhs) { return lhs != rhs; },
@@ -790,8 +674,7 @@ auto operator!=(const Lhs& lhs, const Rhs& rhs)
 }
 
 template <typename Lhs, typename Rhs, EitherIsExpression<Lhs, Rhs> = nullptr>
-auto operator>(const Lhs& lhs, const Rhs& rhs)
-{
+auto operator>(const Lhs& lhs, const Rhs& rhs) {
     return apply(
         ">",
         [](const auto& lhs, const auto& rhs) { return lhs > rhs; },
@@ -800,8 +683,7 @@ auto operator>(const Lhs& lhs, const Rhs& rhs)
 }
 
 template <typename Lhs, typename Rhs, EitherIsExpression<Lhs, Rhs> = nullptr>
-auto operator>=(const Lhs& lhs, const Rhs& rhs)
-{
+auto operator>=(const Lhs& lhs, const Rhs& rhs) {
     return apply(
         ">=",
         [](const auto& lhs, const auto& rhs) { return lhs >= rhs; },
@@ -810,8 +692,7 @@ auto operator>=(const Lhs& lhs, const Rhs& rhs)
 }
 
 template <typename Lhs, typename Rhs, EitherIsExpression<Lhs, Rhs> = nullptr>
-auto operator<(const Lhs& lhs, const Rhs& rhs)
-{
+auto operator<(const Lhs& lhs, const Rhs& rhs) {
     return apply(
         "<",
         [](const auto& lhs, const auto& rhs) { return lhs < rhs; },
@@ -820,8 +701,7 @@ auto operator<(const Lhs& lhs, const Rhs& rhs)
 }
 
 template <typename Lhs, typename Rhs, EitherIsExpression<Lhs, Rhs> = nullptr>
-auto operator<=(const Lhs& lhs, const Rhs& rhs)
-{
+auto operator<=(const Lhs& lhs, const Rhs& rhs) {
     return apply(
         "<=",
         [](const auto& lhs, const auto& rhs) { return lhs <= rhs; },
@@ -830,8 +710,7 @@ auto operator<=(const Lhs& lhs, const Rhs& rhs)
 }
 
 template <typename Lhs, typename Rhs, EitherIsExpression<Lhs, Rhs> = nullptr>
-auto operator&&(const Lhs& lhs, const Rhs& rhs)
-{
+auto operator&&(const Lhs& lhs, const Rhs& rhs) {
     return apply(
         "&&",
         [](const auto& lhs, const auto& rhs) { return lhs && rhs; },
@@ -840,8 +719,7 @@ auto operator&&(const Lhs& lhs, const Rhs& rhs)
 }
 
 template <typename Lhs, typename Rhs, EitherIsExpression<Lhs, Rhs> = nullptr>
-auto operator||(const Lhs& lhs, const Rhs& rhs)
-{
+auto operator||(const Lhs& lhs, const Rhs& rhs) {
     return apply(
         "||",
         [](const auto& lhs, const auto& rhs) { return lhs || rhs; },
@@ -850,8 +728,7 @@ auto operator||(const Lhs& lhs, const Rhs& rhs)
 }
 
 template <typename Lhs, typename Rhs, EitherIsExpression<Lhs, Rhs> = nullptr>
-auto operator+(const Lhs& lhs, const Rhs& rhs)
-{
+auto operator+(const Lhs& lhs, const Rhs& rhs) {
     return apply(
         "+",
         [](const auto& lhs, const auto& rhs) { return lhs + rhs; },
@@ -860,8 +737,7 @@ auto operator+(const Lhs& lhs, const Rhs& rhs)
 }
 
 template <typename Lhs, typename Rhs, EitherIsExpression<Lhs, Rhs> = nullptr>
-auto operator-(const Lhs& lhs, const Rhs& rhs)
-{
+auto operator-(const Lhs& lhs, const Rhs& rhs) {
     return apply(
         "-",
         [](const auto& lhs, const auto& rhs) { return lhs - rhs; },
@@ -870,8 +746,7 @@ auto operator-(const Lhs& lhs, const Rhs& rhs)
 }
 
 template <typename Lhs, typename Rhs, EitherIsExpression<Lhs, Rhs> = nullptr>
-auto operator*(const Lhs& lhs, const Rhs& rhs)
-{
+auto operator*(const Lhs& lhs, const Rhs& rhs) {
     return apply(
         "*",
         [](const auto& lhs, const auto& rhs) { return lhs * rhs; },
@@ -880,8 +755,7 @@ auto operator*(const Lhs& lhs, const Rhs& rhs)
 }
 
 template <typename Lhs, typename Rhs, EitherIsExpression<Lhs, Rhs> = nullptr>
-auto operator/(const Lhs& lhs, const Rhs& rhs)
-{
+auto operator/(const Lhs& lhs, const Rhs& rhs) {
     return apply(
         "/",
         [](const auto& lhs, const auto& rhs) { return lhs / rhs; },
@@ -890,8 +764,7 @@ auto operator/(const Lhs& lhs, const Rhs& rhs)
 }
 
 template <typename Lhs, typename Rhs, EitherIsExpression<Lhs, Rhs> = nullptr>
-auto operator%(const Lhs& lhs, const Rhs& rhs)
-{
+auto operator%(const Lhs& lhs, const Rhs& rhs) {
     return apply(
         "%",
         [](const auto& lhs, const auto& rhs) { return lhs % rhs; },
@@ -900,8 +773,7 @@ auto operator%(const Lhs& lhs, const Rhs& rhs)
 }
 
 template <typename Lhs, typename Rhs, EitherIsExpression<Lhs, Rhs> = nullptr>
-auto operator&(const Lhs& lhs, const Rhs& rhs)
-{
+auto operator&(const Lhs& lhs, const Rhs& rhs) {
     return apply(
         "&",
         [](const auto& lhs, const auto& rhs) { return lhs & rhs; },
@@ -910,8 +782,7 @@ auto operator&(const Lhs& lhs, const Rhs& rhs)
 }
 
 template <typename Lhs, typename Rhs, EitherIsExpression<Lhs, Rhs> = nullptr>
-auto operator|(const Lhs& lhs, const Rhs& rhs)
-{
+auto operator|(const Lhs& lhs, const Rhs& rhs) {
     return apply(
         "|",
         [](const auto& lhs, const auto& rhs) { return lhs | rhs; },
@@ -920,8 +791,7 @@ auto operator|(const Lhs& lhs, const Rhs& rhs)
 }
 
 template <typename Lhs, typename Rhs, EitherIsExpression<Lhs, Rhs> = nullptr>
-auto operator^(const Lhs& lhs, const Rhs& rhs)
-{
+auto operator^(const Lhs& lhs, const Rhs& rhs) {
     return apply(
         "^",
         [](const auto& lhs, const auto& rhs) { return lhs ^ rhs; },
@@ -930,8 +800,7 @@ auto operator^(const Lhs& lhs, const Rhs& rhs)
 }
 
 template <typename Lhs, typename Rhs, EitherIsExpression<Lhs, Rhs> = nullptr>
-auto operator<<(const Lhs& lhs, const Rhs& rhs)
-{
+auto operator<<(const Lhs& lhs, const Rhs& rhs) {
     return apply(
         "<<",
         [](const auto& lhs, const auto& rhs) { return lhs << rhs; },
@@ -940,8 +809,7 @@ auto operator<<(const Lhs& lhs, const Rhs& rhs)
 }
 
 template <typename Lhs, typename Rhs, EitherIsExpression<Lhs, Rhs> = nullptr>
-auto operator>>(const Lhs& lhs, const Rhs& rhs)
-{
+auto operator>>(const Lhs& lhs, const Rhs& rhs) {
     return apply(
         ">>",
         [](const auto& lhs, const auto& rhs) { return lhs >> rhs; },
@@ -949,8 +817,7 @@ auto operator>>(const Lhs& lhs, const Rhs& rhs)
         rhs);
 }
 
-struct FailureHandler
-{
+struct FailureHandler {
     virtual ~FailureHandler(){};
     virtual bool notifyPassing() const = 0;
     virtual void pass(
@@ -967,8 +834,7 @@ template <typename Expression, typename... ContextVariableList>
 void addContextVariables(
     vector<Variable>& variableList,
     const Expression& expression,
-    const ContextVariableList&... contextVariableList)
-{
+    const ContextVariableList&... contextVariableList) {
     expression.appendVariables(variableList);
     addContextVariables(variableList, contextVariableList...);
 }
@@ -977,8 +843,7 @@ inline void addContextVariables(vector<Variable>&) {}
 template <typename Expression, typename... ContextVariableList>
 vector<Variable> buildVariableList(
     const Expression& expression,
-    const ContextVariableList&... contextVariableList)
-{
+    const ContextVariableList&... contextVariableList) {
     vector<Variable> variableList;
     expression.appendVariables(variableList);
     addContextVariables(variableList, contextVariableList...);
@@ -991,8 +856,7 @@ void processFailure(
     Out<FailureHandler> failureHandler,
     optional<string> description,
     Expression expression,
-    ContextVariableList... contextVariableList)
-{
+    ContextVariableList... contextVariableList) {
     failureHandler->fail(
         move(description),
         expression.makeName(),
@@ -1004,8 +868,7 @@ void processSuccess(
     Out<FailureHandler> failureHandler,
     optional<string> description,
     Expression expression,
-    ContextVariableList... contextVariableList)
-{
+    ContextVariableList... contextVariableList) {
     if (failureHandler->notifyPassing()) {
         failureHandler->pass(
             move(description),
@@ -1019,8 +882,7 @@ bool CheckWithFailureHandlerImpl(
     Out<FailureHandler> failureHandler,
     optional<string> description,
     Expression expression,
-    Tail... tail)
-{
+    Tail... tail) {
     if (!static_cast<bool>(expression.evaluate())) {
         processFailure(
             failureHandler, move(description), move(expression), move(tail)...);
@@ -1040,8 +902,7 @@ template <typename Expression,
 bool CheckWithFailureHandler(
     Out<FailureHandler> failureHandler,
     Expression expression,
-    Tail... tail)
-{
+    Tail... tail) {
     return CheckWithFailureHandlerImpl(
         failureHandler, none, move(expression), move(tail)...);
 }
@@ -1050,8 +911,7 @@ template <typename... Tail, IsExpression<Expression> = nullptr>
 bool CheckWithFailureHandler(
     Out<FailureHandler> failureHandler,
     string description,
-    Tail... tail)
-{
+    Tail... tail) {
     return CheckWithFailureHandlerImpl(
         failureHandler, move(description), move(tail)...);
 }
@@ -1064,10 +924,8 @@ bool CheckThrowsWithFailureHandlerImpl(
     Out<FailureHandler> failureHandler,
     optional<string> description,
     Expression expression,
-    ContextVariableList... contextVariableList)
-{
-    try
-    {
+    ContextVariableList... contextVariableList) {
+    try {
         expression.evaluate();
         processFailure(
             failureHandler,
@@ -1077,8 +935,7 @@ bool CheckThrowsWithFailureHandlerImpl(
 
         return false;
     }
-    catch (const exception&)
-    {
+    catch (const exception&) {
         processSuccess(
             failureHandler,
             move(description),
@@ -1098,10 +955,8 @@ bool CheckThrowsWithFailureHandlerImpl(
     Out<FailureHandler> failureHandler,
     optional<string> description,
     FunctionValue<Functor, Args...> expression,
-    ContextVariableList... contextVariableList)
-{
-    try
-    {
+    ContextVariableList... contextVariableList) {
+    try {
         expression.evaluate();
         processFailure(
             failureHandler,
@@ -1111,16 +966,14 @@ bool CheckThrowsWithFailureHandlerImpl(
 
         return false;
     }
-    catch (const Exception&)
-    {
+    catch (const Exception&) {
         processSuccess(
             failureHandler,
             move(description),
             move(expression),
             move(contextVariableList)...);
     }
-    catch (const exception& e)
-    {
+    catch (const exception& e) {
         expression.setException(e);
         processFailure(
             failureHandler,
@@ -1141,8 +994,7 @@ template <typename Exception,
 bool CheckThrowsWithFailureHandler(
     Out<FailureHandler> failureHandler,
     Expression expression,
-    Tail... tail)
-{
+    Tail... tail) {
     return CheckThrowsWithFailureHandlerImpl<Exception>(
         failureHandler, none, move(expression), move(tail)...);
 }
@@ -1151,8 +1003,7 @@ template <typename Exception, typename... Tail>
 bool CheckThrowsWithFailureHandler(
     Out<FailureHandler> failureHandler,
     string description,
-    Tail... tail)
-{
+    Tail... tail) {
     return CheckThrowsWithFailureHandlerImpl<Exception>(
         failureHandler, move(description), move(tail)...);
 }
@@ -1161,10 +1012,8 @@ bool CheckThrowsWithFailureHandler(
 }
 }
 
-namespace Enhedron
-{
-namespace Assertion
-{
+namespace Enhedron {
+namespace Assertion {
 using Impl::Configurable::CheckWithFailureHandler;
 using Impl::Configurable::CheckThrowsWithFailureHandler;
 using Impl::Configurable::IsExpression;

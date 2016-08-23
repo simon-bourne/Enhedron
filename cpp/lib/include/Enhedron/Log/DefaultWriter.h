@@ -19,23 +19,17 @@
 #include "Enhedron/Util.h"
 #include "Enhedron/Util/Json.h"
 
-namespace Enhedron
-{
-namespace Log
-{
-namespace Impl
-{
-namespace DefaultWriter
-{
+namespace Enhedron {
+namespace Log {
+namespace Impl {
+namespace DefaultWriter {
 using std::string;
 
-struct EscapedString
-{
+struct EscapedString {
     const string& value;
 };
 
-struct EscapedCharString
-{
+struct EscapedCharString {
     const char* value;
 };
 }
@@ -43,17 +37,13 @@ struct EscapedCharString
 }
 }
 
-namespace Enhedron
-{
-namespace Log
-{
+namespace Enhedron {
+namespace Log {
 // We need to declare all specialisations before first use to get implicit
 // instantiation.
 template <typename Value, typename Enable = void>
-struct WriteValue
-{
-    static void writeValue(std::ostream& out, const Value& value)
-    {
+struct WriteValue {
+    static void writeValue(std::ostream& out, const Value& value) {
         std::ostringstream valueStream;
         valueStream << value;
         out << "\"" << Util::jsonEscape(valueStream.str()) << "\"";
@@ -61,74 +51,59 @@ struct WriteValue
 };
 
 template <>
-struct WriteValue<bool>
-{
-    static void writeValue(std::ostream& out, bool value)
-    {
+struct WriteValue<bool> {
+    static void writeValue(std::ostream& out, bool value) {
         out << (value ? "true" : "false");
     }
 };
 
 template <>
-struct WriteValue<char>
-{
+struct WriteValue<char> {
     static void writeValue(std::ostream& out, char value) { out << int(value); }
 };
 
 template <>
-struct WriteValue<unsigned char>
-{
-    static void writeValue(std::ostream& out, unsigned char value)
-    {
+struct WriteValue<unsigned char> {
+    static void writeValue(std::ostream& out, unsigned char value) {
         out << int(value);
     }
 };
 
 template <>
-struct WriteValue<signed char>
-{
-    static void writeValue(std::ostream& out, signed char value)
-    {
+struct WriteValue<signed char> {
+    static void writeValue(std::ostream& out, signed char value) {
         out << int(value);
     }
 };
 
 template <>
-struct WriteValue<std::string>
-{
-    static void writeValue(std::ostream& out, const std::string& value)
-    {
+struct WriteValue<std::string> {
+    static void writeValue(std::ostream& out, const std::string& value) {
         out << "\"" << Util::jsonEscape(value) << "\"";
     }
 };
 
 template <>
-struct WriteValue<const char*>
-{
-    static void writeValue(std::ostream& out, const char* value)
-    {
+struct WriteValue<const char*> {
+    static void writeValue(std::ostream& out, const char* value) {
         out << "\"" << Util::jsonEscape(value) << "\"";
     }
 };
 
 template <>
-struct WriteValue<Impl::DefaultWriter::EscapedString>
-{
+struct WriteValue<Impl::DefaultWriter::EscapedString> {
     static void writeValue(
         std::ostream& out,
-        const Impl::DefaultWriter::EscapedString& escapedString)
-    {
+        const Impl::DefaultWriter::EscapedString& escapedString) {
         out << "\"" << escapedString.value << "\"";
     }
 };
 
 template <>
-struct WriteValue<Impl::DefaultWriter::EscapedCharString>
-{
+struct WriteValue<Impl::DefaultWriter::EscapedCharString> {
     static void writeValue(
         std::ostream& out,
-        const Impl::DefaultWriter::EscapedCharString& escapedString)
-    {
+        const Impl::DefaultWriter::EscapedCharString& escapedString) {
         out << "\"" << escapedString.value << "\"";
     }
 };
@@ -136,21 +111,16 @@ struct WriteValue<Impl::DefaultWriter::EscapedCharString>
 template <typename Value>
 struct WriteValue<
     Value,
-    typename std::enable_if<std::is_arithmetic<Value>::value>::type>
-{
+    typename std::enable_if<std::is_arithmetic<Value>::value>::type> {
     static void writeValue(std::ostream& out, Value value) { out << value; }
 };
 }
 }
 
-namespace Enhedron
-{
-namespace Log
-{
-namespace Impl
-{
-namespace DefaultWriter
-{
+namespace Enhedron {
+namespace Log {
+namespace Impl {
+namespace DefaultWriter {
 using std::setfill;
 using std::setw;
 using std::ostringstream;
@@ -164,8 +134,7 @@ using boost::posix_time::microsec_clock;
 
 using Util::jsonEscape;
 
-class DefaultWriter final : public NoCopy
-{
+class DefaultWriter final : public NoCopy {
 public:
     DefaultWriter(const char* module) : module(jsonEscape(module)) {}
     /** @brief Write a log line.
@@ -182,8 +151,7 @@ public:
         Level level,
         EntryType type,
         const char* name,
-        const VarField&... extraFields)
-    {
+        const VarField&... extraFields) {
         ostringstream outStream;
         thread_local string threadId = getStringThreadId();
 
@@ -215,14 +183,11 @@ public:
     }
 
 private:
-    static string getStringThreadId()
-    {
+    static string getStringThreadId() {
         thread::id notThread;
         auto threadId = this_thread::get_id();
 
-        if (threadId == notThread) {
-            return "Main";
-        }
+        if (threadId == notThread) { return "Main"; }
 
         ostringstream threadIdStr;
         threadIdStr << threadId;
@@ -230,8 +195,7 @@ private:
         return jsonEscape(threadIdStr.str());
     }
 
-    void writeUTCTime(Out<ostream> out)
-    {
+    void writeUTCTime(Out<ostream> out) {
         auto now = microsec_clock::universal_time();
         auto date = now.date();
         auto time = now.time_of_day();
@@ -247,8 +211,8 @@ private:
 
     inline void writeComma(ostream& out) { out << ", "; }
     template <typename NAME, typename VALUE>
-    inline void writeMember(ostream& out, const NAME& name, const VALUE& value)
-    {
+    inline void
+    writeMember(ostream& out, const NAME& name, const VALUE& value) {
         out << "\"" << name << "\": ";
         WriteValue<VALUE>::writeValue(out, value);
     }
@@ -259,8 +223,7 @@ private:
         ostream& out,
         const char* fieldName,
         const ValueType& fieldValue,
-        const FieldList&... extraFields)
-    {
+        const FieldList&... extraFields) {
         writeMember(out, fieldName, fieldValue);
         writeAdditionalFields(out, extraFields...);
     }
@@ -271,8 +234,7 @@ private:
         ostream& out,
         const char* fieldName,
         const ValueType& fieldValue,
-        const FieldList&... extraFields)
-    {
+        const FieldList&... extraFields) {
         writeComma(out);
         writeMember(out, fieldName, fieldValue);
         writeAdditionalFields(out, extraFields...);
@@ -285,10 +247,8 @@ private:
 }
 }
 
-namespace Enhedron
-{
-namespace Log
-{
+namespace Enhedron {
+namespace Log {
 using Impl::DefaultWriter::DefaultWriter;
 }
 }

@@ -15,8 +15,7 @@ using std::vector;
 using std::set;
 
 // We'll use this later in some parameterized tests.
-void checkVectorSize(Check& check, size_t size)
-{
+void checkVectorSize(Check& check, size_t size) {
     vector<int> v(size, 0);
     check(length(VAR(v)) == size);
 }

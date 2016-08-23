@@ -9,8 +9,7 @@
 
 #include <array>
 
-namespace Enhedron
-{
+namespace Enhedron {
 using std::array;
 using namespace Test;
 

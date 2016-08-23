@@ -42,22 +42,19 @@ int multiply(int x, int y) { return x * y; }
 
 // Assertion example 14:
 template <typename Value>
-Value multiplyOverloaded(Value x, Value y)
-{
+Value multiplyOverloaded(Value x, Value y) {
     return x * y;
 }
 
 template <typename Value>
-Value multiplyOverloaded(Value x, Value y, Value z)
-{
+Value multiplyOverloaded(Value x, Value y, Value z) {
     return x * y * z;
 }
 // Assertion example 14 end.
 
 // Assertion example 15:
 template <typename... Args>
-auto multiplyOverloadedProxy(Args&&... args)
-{
+auto multiplyOverloadedProxy(Args&&... args) {
     return makeFunction("multiplyOverloaded", [](auto&&... args) {
         return multiplyOverloaded(forward<decltype(args)>(args)...);
     })(forward<Args>(args)...);
@@ -160,8 +157,7 @@ static Suite
 // Writing tests: contexts end.
 
 // Parameterized multiply test begin.
-void testMultiply(Check& check, int x, int y, int expectedResult)
-{
+void testMultiply(Check& check, int x, int y, int expectedResult) {
     check.when("we multiply them together with `multiply`", [&] {
         check(VAR(multiply)(x, y) == expectedResult);
     });
@@ -169,21 +165,16 @@ void testMultiply(Check& check, int x, int y, int expectedResult)
 // Parameterized multiply test end.
 
 // Pretty print define begin.
-struct MyType
-{
+struct MyType {
     int x;
     int y;
 };
 
-namespace Enhedron
-{
-namespace Assertion
-{
+namespace Enhedron {
+namespace Assertion {
 template <>
-struct Convert<MyType>
-{
-    static string toString(const MyType& value)
-    {
+struct Convert<MyType> {
+    static string toString(const MyType& value) {
         ostringstream output;
         output << "{ x = " << value.x << ", y = " << value.y << " }";
         return output.str();
@@ -274,9 +265,7 @@ static Suite
                       // This is our model to check multiply against.
                       int expected = 0;
 
-                      for (int i = 0; i < x; ++i) {
-                          expected += y;
-                      }
+                      for (int i = 0; i < x; ++i) { expected += y; }
 
                       check(VAR(result) == VAR(expected), VAR(x), VAR(y));
                   });

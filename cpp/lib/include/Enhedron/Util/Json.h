@@ -12,28 +12,22 @@
 #include <sstream>
 #include <string>
 
-namespace Enhedron
-{
-namespace Util
-{
-namespace Impl
-{
-namespace Json
-{
+namespace Enhedron {
+namespace Util {
+namespace Impl {
+namespace Json {
 using std::string;
 using std::ostringstream;
 using std::setfill;
 using std::setw;
 using std::hex;
 
-inline string jsonEscape(const string& input)
-{
+inline string jsonEscape(const string& input) {
     string escapedString;
     escapedString.reserve(input.size());
 
     for (auto c : input) {
-        switch (c)
-        {
+        switch (c) {
             case '\"':
                 escapedString.append("\\");
                 escapedString += '\"';
@@ -69,8 +63,7 @@ inline string jsonEscape(const string& input)
                                << static_cast<unsigned int>(c);
                     escapedString.append(escapeCode.str());
                 }
-                else
-                {
+                else {
                     escapedString += c;
                 }
                 break;
@@ -84,10 +77,8 @@ inline string jsonEscape(const string& input)
 }
 }
 
-namespace Enhedron
-{
-namespace Util
-{
+namespace Enhedron {
+namespace Util {
 using Impl::Json::jsonEscape;
 }
 }
