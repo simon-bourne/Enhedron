@@ -57,9 +57,7 @@ struct CerrFailureHandler final : FailureHandler {
 
         cerr.flush();
 
-#ifndef NDEBUG
         terminate();
-#endif
     }
 };
 
